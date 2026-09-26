@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Course chapters for CT License Trail.
 
-data/course.json is the editable chapter list. Names are chapter titles only.
-Words map each crossword answer to a chapter number. Chapter 0 is not a
-course chapter: it marks everyday filler the grid may use no matter which
-chapters are checked. Questions use chapters 1 through 21.
+data/course.json is the editable chapter list. Names are topic tags only.
+Do not add a school name or a book title. Do not copy or closely paraphrase
+textbook wording, questions, glossary definitions, or figures. Questions,
+clues, and definitions stay original and follow the PSI outline, Connecticut
+statutes, and DCP sources. Words map each crossword answer to a chapter
+number. Chapter 0 is not a course chapter: it marks everyday filler the grid
+may use no matter which chapters are checked. Questions use chapters 1 through 21.
 
 Rebuild the crossword library after chapter titles or word tags change:
 python3 scripts/build_crosswords.py
@@ -445,8 +448,10 @@ def course_document(words):
     return {
         "version": 2,
         "note": (
-            "Course chapters for CT License Trail. Replace the chapters list to match a syllabus. "
-            "Do not add a school name. The words map sends every crossword answer to a chapter number. "
+            "Course chapters for CT License Trail. Chapter titles are topic tags only. "
+            "Do not add a school name or a book title. Do not copy or closely paraphrase textbook wording, questions, glossary definitions, or figures. "
+            "Questions, clues, and definitions stay original and follow the PSI outline, Connecticut statutes, and DCP sources. "
+            "The words map sends every crossword answer to a chapter number. "
             "Chapter 0 is everyday filler the crossword may use in any puzzle; it is not a course chapter. "
             "defaultCompleted is the checklist the app starts with. "
             "After you change chapters or word tags, run python3 scripts/build_crosswords.py."

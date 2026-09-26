@@ -45,7 +45,7 @@ Questions live in `scripts/bank_ct.py`, `scripts/bank_national.py`, `scripts/ban
 python3 scripts/build_bank.py
 ```
 
-That writes `data/questions.json`. Each item needs a stem, one correct answer, three wrong answers, and an explanation. Connecticut items need a `source` with a `label` and a `url` pointing at a public official page. Math items need `steps`. The rebuild also stamps a `chapter` number from `scripts/course_units.py`. Do not copy questions from a textbook, a paid prep course, or PSI's sample items.
+That writes `data/questions.json`. Each item needs a stem, one correct answer, three wrong answers, and an explanation. Connecticut items need a `source` with a `label` and a `url` pointing at a public official page. Math items need `steps`. The rebuild also stamps a `chapter` number from `scripts/course_units.py`. Chapter titles in `data/course.json` are topic tags only. Do not name a textbook. Questions, crossword clues, and definitions must stay original and grounded in the PSI outline, Connecticut statutes, and DCP sources. Do not copy or closely paraphrase textbook wording, questions, glossary definitions, or figures, and do not copy a paid prep course or PSI's sample items.
 
 Topic weights in `TOPICS` must keep adding up to 80 for the national portion and 35 for the Connecticut portion. Those weights are how the mock exam draws its mix. The Math Pass topic supplies the national calculations block (weight 6) and is not a stop on the road.
 
