@@ -48,6 +48,7 @@ a { color: var(--focus); }
 .skip:focus { top: 8px; }
 
 .shell {
+  width: 100%;
   max-width: 480px;
   height: 100dvh;
   margin: 0 auto;
@@ -198,6 +199,7 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 8px; }
 .steps li { margin: 4px 0; }
 .source { font-size: 0.86rem; margin: 8px 0 0; }
 .fine { font-size: 0.92rem; color: var(--muted); }
+.keys-hint { margin: 8px 0 0; }
 
 .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .supply {
@@ -345,6 +347,7 @@ main.is-dash {
   font-family: Georgia, "Iowan Old Style", serif;
   margin: 0 0 10px;
 }
+.dash-layout { display: block; }
 .dash-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -515,6 +518,7 @@ footer.fine {
   font-size: 0.95rem;
 }
 .xw-clue a { font-size: 0.82rem; }
+.xw-keys { margin: 0 0 8px; font-size: 0.85rem; }
 .xw-keyrow {
   display: flex;
   justify-content: center;
@@ -550,6 +554,93 @@ footer.fine {
 .xw-all h3 { margin: 8px 0 4px; font-size: 1rem; }
 .xw-list { margin: 0; padding-left: 1.2rem; }
 .xw-list li { margin: 2px 0; }
+@media (min-width: 880px) {
+  :root { --tab: 0px; }
+  .shell { max-width: 1080px; }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    order: 0;
+  }
+  .stats { margin-top: 0; }
+  .tabs {
+    position: static;
+    left: auto;
+    transform: none;
+    width: auto;
+    order: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 10px;
+  }
+  .tabs button {
+    width: auto;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    padding: 8px 14px;
+  }
+  .tabs svg { margin: 0; }
+  main { order: 2; padding-bottom: 28px; }
+  .dash-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+  .dash-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas:
+      "go go go"
+      "xw when chapters"
+      "ready ready ready"
+      "review ranger math";
+  }
+  .tile-continue { grid-area: go; }
+  .tile-xw { grid-area: xw; }
+  .tile-count { grid-area: when; }
+  .tile-ready { grid-area: ready; }
+  .tile-chapters { grid-area: chapters; }
+  .tile-review { grid-area: review; }
+  .tile-ranger { grid-area: ranger; }
+  .tile-math { grid-area: math; }
+  .trail-map {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100dvh - 150px);
+    overflow: auto;
+  }
+  #main:not(.is-dash) > .card,
+  #main:not(.is-dash) > article.card {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .xw {
+    display: grid;
+    grid-template-columns: minmax(280px, 460px) minmax(0, 1fr);
+    align-items: start;
+  }
+  .xw-scroll { overflow: visible; }
+  .xw-grid { width: min(100%, 460px); margin: 0; }
+  .xw-dock { position: sticky; top: 12px; }
+  .roadline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border-left: 0;
+    margin-left: 0;
+    padding-left: 0;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
 }
