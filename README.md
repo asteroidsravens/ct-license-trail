@@ -75,11 +75,15 @@ Conveyance-tax math uses the rates in § 12-494 and assumes the town has **not**
 
 Figures that could not be pinned to a stable official text were left out. That includes the current security-deposit interest rate (it is reset from the deposit index), any dollar cap on the guaranty-fund balance, Connecticut recording priority, the common-interest resale-certificate cancellation window, and an appraisal de minimis dollar cutoff. Leasing and property management is the shortest national topic because the outline gives it the smallest share of the exam. Connecticut agency is covered, with fewer items than licensing or conduct.
 
+## Credits
+
+Third-party code used to publish the site is listed in [`LICENSES/credits`](LICENSES/credits). The study text, crossword, and art in this repository are original. The deploy workflow calls MIT-licensed GitHub Actions (`actions/checkout`, `actions/configure-pages`, `actions/upload-pages-artifact`, and `actions/deploy-pages`). No copyrighted game art or textbook content is included.
+
 ## Deploy
 
-Pushes to `main` run `.github/workflows/pages.yml`, which publishes this folder with GitHub Pages. The site uses relative paths so it works as a project site.
+Pushes to `main` run `.github/workflows/pages.yml`. The site uses relative paths so it can live at a project URL. The intended address is `https://asteroidsravens.github.io/ct-license-trail/`.
 
-The public URL is `https://asteroidsravens.github.io/ct-license-trail/`. Pages has to be turned on once in the repository settings: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The workflow will try to enable that itself. If the token cannot, the Actions log says the Pages site was not found, and the setting above is the fix. After that, the next push to `main` publishes the site.
+The repository is meant to stay private. GitHub Pages on a private repository needs a paid plan (GitHub Pro, Team, or Enterprise). An admin has to set **Settings → Pages → Build and deployment → Source: GitHub Actions** once. The workflow cannot create that site on its own. Do not switch the repository back to public if Pages then fails for billing.
 
 ## Disclaimer
 
