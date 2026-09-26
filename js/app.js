@@ -4,6 +4,7 @@ import {
   roadTopics, puzzleForDate, awardCrossword, completedChapters,
   themeId, displayStem, ctLawEventsForStop, THEMES,
   EXAM_SHAPE, portionReadiness, hydratePortions, chapterStudyPlan,
+  companion, companionCheer, cleanDogName, liveStreak, DEFAULT_DOG_NAME,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -33,7 +34,13 @@ function loadState() {
       ...fresh,
       ...saved,
       supplies: { ...fresh.supplies, ...(saved.supplies || {}) },
-      settings: { sound: false, ...(saved.settings || {}) },
+      settings: {
+        sound: false,
+        theme: "outdoors",
+        dog: true,
+        dogName: DEFAULT_DOG_NAME,
+        ...(saved.settings || {}),
+      },
       streak: { ...fresh.streak, ...(saved.streak || {}) },
       stats: { ...fresh.stats, ...(saved.stats || {}) },
       portions: saved.portions || fresh.portions,
@@ -218,57 +225,166 @@ function render() {
     about: viewAbout,
     daily: viewDaily,
   };
+  main.classList.toggle("is-dash", screen === "home");
   (views[screen] || viewHome)();
   const heading = main.querySelector("h2, .stem");
   if (heading) heading.setAttribute("tabindex", "-1");
 }
 
+function forestBanner() {
+  return `<svg class="forest" viewBox="0 0 360 128" role="img" aria-label="Illustrated woods and a dirt trail">
+    <rect width="360" height="128" fill="#1b4334"/>
+    <circle cx="292" cy="30" r="16" fill="#f0b45a"/>
+    <path d="M0 86c48-22 92 8 150-8s92-6 210 10v40H0z" fill="#2f6b4c"/>
+    <path d="M0 104c70-16 120 16 190 0s110 8 170-6v30H0z" fill="#214c38"/>
+    <path d="M28 108 L54 58 L80 108z" fill="#10281e"/>
+    <path d="M62 110 L92 46 L122 110z" fill="#16382c"/>
+    <path d="M248 112 L274 62 L300 112z" fill="#10281e"/>
+    <path d="M286 114 L308 70 L330 114z" fill="#16382c"/>
+    <path d="M18 118c40-16 78-4 120-16s84 4 140-12 48-2 64 4" fill="none" stroke="#8d5a34" stroke-width="7" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function dogMark() {
+  return `<svg class="dog" viewBox="0 0 78 46" aria-hidden="true">
+    <path d="M10 30c6 8 28 12 46 2 6-4 10-8 8-12-4 2-8-2-12-6-2 6-12 8-18 4-4 4-12 2-16 4-4 0-8 4-8 8z" fill="#8d5a34"/>
+    <ellipse cx="52" cy="18" rx="10" ry="8" fill="#a56b3c"/>
+    <path d="M46 12c1-8 12-8 13-1" fill="#6b4124"/>
+    <circle cx="55" cy="17" r="1.5" fill="#1c140c"/>
+    <path d="M58 21c3 1 5 1 6-1" fill="none" stroke="#1c140c" stroke-width="1.2" stroke-linecap="round"/>
+    <path d="M16 32c-8 1-12 8-6 11 5-4 10-6 14-3" fill="#d7c4a3"/>
+    <path d="M60 26c8-1 14 4 11 9" fill="none" stroke="#6b4124" stroke-width="3" stroke-linecap="round"/>
+    <path d="M22 36c2 6 8 6 10 1" fill="none" stroke="#6b4124" stroke-width="2" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function flameMark(hot) {
+  return `<svg class="flame ${hot ? "hot" : ""}" viewBox="0 0 24 32" aria-hidden="true">
+    <path d="M12 1c3 7-3 9-3 14a7 7 0 0 0 14 0C23 8 17 6 14 0c-1 5-1 7-2 1z" fill="${hot ? "#e07a2f" : "#b7a898"}"/>
+    <path d="M12 16c1 3-1 4-1 6a3 3 0 0 0 6 0c0-3-2-4-3-6-1 2-1 3-2 0z" fill="${hot ? "#f0b45a" : "#ddd2c6"}"/>
+  </svg>`;
+}
+
+function rangerBadge() {
+  return `<svg class="badge-ranger" viewBox="0 0 64 74" aria-hidden="true">
+    <path d="M32 3 58 16v22c0 16-12 28-26 33C18 66 6 54 6 38V16z" fill="#16382c" stroke="#f0b45a" stroke-width="3"/>
+    <path d="M32 24 42 42H22z" fill="#c4a574"/>
+    <rect x="29" y="42" width="6" height="12" rx="1" fill="#8d5a34"/>
+  </svg>`;
+}
+
 function viewHome() {
+  const today = todayKey();
   const level = levelInfo(state.xp);
   const days = daysUntil(state.examDate);
   const due = dueInChapters().length;
   const road = openRoad();
-  const town = road.length ? road[(state.routeIndex || 0) % road.length] : null;
-  let dateLine = "Set your own exam date whenever you know it. Change it any time.";
-  if (days === 0) dateLine = "Exam day is today. A short review still counts.";
-  else if (days > 0) dateLine = `${days} day${days === 1 ? "" : "s"} until the date you chose.`;
-  else if (days < 0) dateLine = "That exam date has passed. Pick another whenever you are ready.";
+  const hereIndex = road.length ? (state.routeIndex || 0) % road.length : 0;
+  const town = road[hereIndex] || null;
+  const pal = companion(state);
+  const cheer = companionCheer(state, today);
+  const solved = Boolean(state.crossword?.solved?.[today]);
+  const gridStreak = liveStreak(state.crossword?.streak, today);
+  const dayStreak = liveStreak(state.streak, today);
+  const chapterTotal = course?.chapters?.length || 21;
+  const chapterDone = chapterList().length;
+  const ready = portionReadiness(state);
+  const mathCount = bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).length;
   const resumeMock = state.mock && !state.mock.submitted;
   const resumeQuiz = state.session && state.session.phase;
+  let dateBig = "—";
+  let dateLine = "Choose a date";
+  if (days === 0) {
+    dateBig = "0";
+    dateLine = "Exam day";
+  } else if (days > 0) {
+    dateBig = String(days);
+    dateLine = days === 1 ? "day to go" : "days to go";
+  } else if (days < 0) {
+    dateBig = "0";
+    dateLine = "Date has passed";
+  }
   main.innerHTML = `
-    <section class="card">
-      <p class="kicker">${town ? esc(town.town) : "Course chapters"}</p>
-      <h2>${resumeQuiz ? "Pick up the same question" : town ? `Next stop: ${esc(town.name)}` : "No town in these chapters yet"}</h2>
-      <p class="lede">${town ? `${esc(town.blurb)} Three questions is a full stop between rides.` : "The road uses only chapters you've completed. Check the ones you have finished."}</p>
-      <div class="stack">
-        ${resumeMock ? `<button class="btn btn-primary" data-act="resume-mock">Resume mock exam</button>` : ""}
-        <button class="btn btn-primary" data-act="continue" ${!resumeQuiz && !town ? "disabled" : ""}>${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
-        <button class="btn btn-pine" data-act="study-list">Study a chapter</button>
-        <button class="btn btn-quiet" data-act="daily">${dailyHomeLabel()}</button>
-        <button class="btn btn-quiet" data-act="settings">Chapters, exam date, and sound</button>
-      </div>
+    <h2 class="dash-title">Trailhead</h2>
+    <section class="trail-card dash-span">
+      ${forestBanner()}
+      <p class="kicker">Connecticut trail</p>
+      ${road.length ? `<ol class="blaze">
+        ${road.map((topic, index) => {
+          const here = index === hereIndex;
+          const pct = masteryPercent(state, topic.id);
+          return `<li>
+            <button class="blaze-stop ${here ? "here" : ""}" data-topic="${esc(topic.id)}">
+              <span class="blaze-dot" aria-hidden="true"></span>
+              <span>
+                <strong>${esc(topic.town)}</strong>
+                <span class="muted">${esc(topic.name)} · ${pct}%</span>
+              </span>
+              ${here && pal.on ? `<span class="dog-slot">${dogMark()}<span class="sr">${esc(pal.name)} is on this stop</span></span>` : ""}
+            </button>
+            ${here && cheer ? `<p class="cheer">${esc(cheer)}</p>` : ""}
+          </li>`;
+        }).join("")}
+      </ol>` : `<p>Check a chapter to open the towns on this trail.</p>`}
     </section>
-    <section class="card">
-      <h2>${esc(level.name)}</h2>
-      <p class="muted">${state.xp} XP${level.nextAt ? ` · ${level.nextAt - state.xp} to ${esc(level.nextName)}` : ""}</p>
-      <div class="meter" aria-hidden="true"><span style="width:${level.pct}%"></span></div>
-      <div class="meters" style="margin-top:12px">
-        ${SUPPLIES.map((row) => `
-          <div class="supply">
-            <strong>${esc(row.label)}</strong>
-            <span class="muted">${state.supplies[row.id]}/${SUPPLY_MAX}</span>
-            <div class="bar" aria-hidden="true"><span style="width:${(state.supplies[row.id] / SUPPLY_MAX) * 100}%"></span></div>
-          </div>`).join("")}
-      </div>
-      <p class="muted">A miss spends a supply. Three correct answers in a row put one back. Hitting empty is a pull-over, not the end of the trip.</p>
-    </section>
-    <section class="card">
-      <h2>Your date</h2>
-      <p>${esc(dateLine)}</p>
-      <p>${due ? `${due} missed question${due === 1 ? "" : "s"} ready for another look.` : "The review pile is clear."}</p>
-    </section>
-      <p class="fine">Unofficial study aid for the Connecticut salesperson exam. Not affiliated with PSI or the Department of Consumer Protection.</p>
-    ${readinessCard()}`;
+    <div class="dash-grid">
+      <article class="trail-card dash-span">
+        <p class="kicker">Continue the Trail</p>
+        <h3>${resumeQuiz ? "Same question, still open" : town ? esc(town.town) : "No town yet"}</h3>
+        <p>${town ? esc(town.blurb) : "The trail uses chapters you have checked."}</p>
+        <div class="supply-row">
+          ${SUPPLIES.map((row) => `<span><strong>${esc(row.label)}</strong> ${state.supplies[row.id]}/${SUPPLY_MAX}</span>`).join("")}
+        </div>
+        <div class="stack">
+          ${resumeMock ? `<button class="btn btn-quiet" data-act="resume-mock">Resume mock exam</button>` : ""}
+          <button class="btn btn-primary" data-act="continue" ${!resumeQuiz && !town ? "disabled" : ""}>${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
+        </div>
+      </article>
+      <button class="trail-card tile" data-act="daily">
+        <span class="tile-top">${flameMark(gridStreak > 0)} <span class="kicker">Today's Crossword</span></span>
+        <strong class="dash-num">${solved ? "Done" : "Not yet"}</strong>
+        <span class="muted">${gridStreak} day streak</span>
+      </button>
+      <button class="trail-card tile" data-act="settings">
+        <span class="kicker">Exam Countdown</span>
+        <strong class="dash-num">${esc(dateBig)}</strong>
+        <span class="muted">${esc(dateLine)}</span>
+      </button>
+      <article class="trail-card dash-span">
+        <p class="kicker">Readiness</p>
+        ${ready.map((row) => `
+          <p class="ready-line"><strong>${esc(row.label)}</strong> <span>${row.count} on the exam · ${row.percent}% · ${esc(row.status)}</span></p>
+          <div class="meter" aria-hidden="true"><span style="width:${row.seen ? row.percent : 0}%"></span></div>
+        `).join("")}
+        <p class="muted">National portion is ${EXAM_SHAPE.nationalCount} questions. Connecticut portion is ${EXAM_SHAPE.stateCount}. Each needs ${EXAM_SHAPE.passingPercent}%.</p>
+      </article>
+      <article class="trail-card">
+        <p class="kicker">Chapters</p>
+        <p class="dash-num">${chapterDone}/${chapterTotal}</p>
+        <div class="stack">
+          <button class="btn btn-pine" data-act="study-list">Study a chapter</button>
+          <button class="btn btn-quiet" data-act="settings">Edit checklist</button>
+        </div>
+      </article>
+      <button class="trail-card tile" data-act="review-tab">
+        <span class="kicker">Review queue</span>
+        <strong class="dash-num">${due}</strong>
+        <span class="muted">${due ? "ready for another look" : "queue is clear"}</span>
+      </button>
+      <article class="trail-card ranger">
+        <span class="kicker">Ranger badge</span>
+        ${rangerBadge()}
+        <strong>${esc(level.name)}</strong>
+        <span class="muted">${dayStreak}-day streak · ${state.xp} XP</span>
+        <div class="meter" aria-hidden="true"><span style="width:${level.pct}%"></span></div>
+      </article>
+      <button class="trail-card tile" data-act="math-start" ${mathCount ? "" : "disabled"}>
+        <span class="kicker">Math Pass</span>
+        <strong class="dash-num">${mathCount}</strong>
+        <span class="muted">Quick drill</span>
+      </button>
+    </div>
+    <p class="fine dash-note">Unofficial study aid. Not affiliated with PSI or the Department of Consumer Protection.</p>`;
 }
 
 function viewQuestion() {
@@ -738,6 +854,16 @@ function viewSettings() {
           <button class="btn ${themeId(state) === row.id ? "btn-pine" : "btn-quiet"}" data-act="theme" data-theme="${row.id}" aria-pressed="${themeId(state) === row.id ? "true" : "false"}">${esc(row.name)}</button>`).join("")}
       </div>
       <p class="muted">${esc(THEMES.find((row) => row.id === themeId(state))?.note || "")}</p>
+    </section>
+    <section class="card">
+      <h2>Trail companion</h2>
+      <p>Optional. A dog walks the town trail and leaves a short cheer. The name stays on this phone.</p>
+      <button class="btn btn-pine" data-act="toggle-dog" aria-pressed="${companion(state).on ? "true" : "false"}">${companion(state).on ? `${esc(companion(state).name)} is on the trail` : "Dog is off the trail"}</button>
+      <label class="field" for="dog-name">Name</label>
+      <input id="dog-name" maxlength="20" autocomplete="off" value="${esc(companion(state).name)}">
+      <div class="stack" style="margin-top:12px">
+        <button class="btn btn-primary" data-act="save-dog">Save name</button>
+      </div>
     </section>
     <section class="card">
       <h2>Sound</h2>
@@ -1375,6 +1501,17 @@ function onClick(event) {
     const next = THEMES.some((row) => row.id === button.dataset.theme) ? button.dataset.theme : "classic";
     state.settings.theme = next;
     save();
+    viewSettings();
+  } else if (act === "toggle-dog") {
+    state.settings.dog = companion(state).on ? false : true;
+    save();
+    viewSettings();
+  } else if (act === "save-dog") {
+    const field = document.querySelector("#dog-name");
+    state.settings.dogName = cleanDogName(field ? field.value : "");
+    state.settings.dog = true;
+    save();
+    say(`${state.settings.dogName} is on the trail.`);
     viewSettings();
   } else if (act === "toggle-sound") {
     state.settings.sound = !state.settings.sound;

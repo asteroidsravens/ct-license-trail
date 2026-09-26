@@ -335,6 +335,91 @@ input[type="date"], input[type="text"], select {
   font: inherit;
   color: inherit;
 }
+main.is-dash {
+  background:
+    radial-gradient(180px 90px at 85% 0%, rgba(240, 180, 90, 0.2), transparent 70%),
+    linear-gradient(180deg, #1b4334 0, #16382c 220px, #101820 220px);
+}
+.dash-title {
+  color: #f7f1e6;
+  font-family: Georgia, "Iowan Old Style", serif;
+  margin: 0 0 10px;
+}
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.dash-span { grid-column: 1 / -1; }
+.trail-card {
+  background: linear-gradient(#fffaf3, #f3e6d4);
+  border: 1px solid #6b4a32;
+  border-radius: 16px;
+  box-shadow: 0 4px 0 #3d2a1c;
+  padding: 12px;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+.dash-grid > .trail-card { margin: 0; }
+button.trail-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  min-height: 118px;
+}
+button.trail-card:disabled { opacity: 0.55; }
+.trail-card h3 { margin: 0 0 6px; font-size: 1.25rem; }
+.forest { display: block; width: 100%; height: auto; border-radius: 12px; margin-bottom: 8px; }
+.blaze { list-style: none; margin: 8px 0 0; padding: 0 0 0 10px; border-left: 4px solid #8d5a34; }
+.blaze li { margin: 0 0 8px; }
+.blaze-stop {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 4px;
+  border-radius: 12px;
+}
+.blaze-stop.here { background: #efe2cf; }
+.blaze-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 99px;
+  border: 3px solid #16382c;
+  background: #fff;
+  flex: 0 0 auto;
+}
+.blaze-stop.here .blaze-dot { background: #f0b45a; }
+.blaze-stop > span:nth-child(2) { flex: 1; min-width: 0; }
+.blaze-stop .muted { display: block; font-size: 0.86rem; }
+.dog { width: 68px; height: 40px; flex: 0 0 auto; }
+.cheer {
+  margin: 0 0 8px 22px;
+  background: #fff;
+  border: 1px solid #c4a574;
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+.tile-top { display: flex; align-items: center; gap: 6px; }
+.flame { width: 18px; height: 24px; flex: 0 0 auto; }
+.dash-num { font-family: Georgia, "Iowan Old Style", serif; font-size: 1.8rem; line-height: 1.1; }
+.supply-row { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 8px 0 12px; font-size: 0.95rem; }
+.supply-row strong { display: block; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.ready-line { display: flex; justify-content: space-between; gap: 8px; margin: 8px 0 0; }
+.ready-line span { color: var(--muted); text-align: right; }
+.ranger { display: grid; grid-template-columns: 52px 1fr; column-gap: 8px; align-items: center; }
+.ranger .kicker, .ranger .meter { grid-column: 1 / -1; }
+.badge-ranger { width: 52px; height: 60px; grid-row: 2 / span 2; }
+.dash-note { color: #d7e3da; margin-top: 12px; }
+
 .sr {
   position: absolute;
   width: 1px;
