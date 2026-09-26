@@ -36,6 +36,17 @@ python3 -m http.server 8080
 
 Then open `http://127.0.0.1:8080/`.
 
+## Run in Docker
+
+The same static files can run in a container. The image is the official `nginx:1.27-alpine` image. nginx is not copied into this repository. It only serves the pages, styles, scripts, and data already in the tree.
+
+```bash
+docker build -t ct-license-trail .
+docker run --rm -p 8080:80 ct-license-trail
+```
+
+Then open `http://127.0.0.1:8080/`. Progress still stays in that browser. The container does not send answers anywhere.
+
 Check the game rules, the bank, and the crossword library:
 
 ```bash
@@ -87,7 +98,7 @@ Pushes to `main` run `.github/workflows/pages.yml`, the same Actions shape as [t
 
 The site uses relative paths so it can live at a project URL, the same kind of address as [the-slow-boil](https://asteroidsravens.github.io/the-slow-boil/). The intended address is `https://asteroidsravens.github.io/ct-license-trail/`. The user-site root, `https://asteroidsravens.github.io/`, stays the existing site. This app does not replace that index.
 
-The repository is meant to stay private. GitHub Pages on a private repository needs a paid plan (GitHub Pro, Team, or Enterprise). An admin has to set **Settings → Pages → Build and deployment → Source: GitHub Actions** once. The workflow cannot create that site on its own. Do not switch the repository back to public if Pages then fails for billing.
+The repository is meant to stay private. GitHub Pro includes GitHub Pages for a private repository. Changing visibility from this project returned HTTP 403, `Resource not accessible by integration`, so the repository is still public and no Pages site exists. An owner with admin access has to set the repository to Private, then set **Settings → Pages → Build and deployment → Source: GitHub Actions**. The workflow cannot do either step. Do not publish a public Pages site instead, and do not switch the repository back to public if Pages then fails. `main` also has to contain this game before a push will publish the address above.
 
 ## Disclaimer
 
