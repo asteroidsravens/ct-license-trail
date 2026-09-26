@@ -1,2 +1,72 @@
-# ct-license-trail
-An original, mobile-friendly study game for the Connecticut real estate salesperson exam.
+# CT License Trail
+
+An unofficial, mobile-first study game for the Connecticut real estate **salesperson** exam given by PSI. You drive a short road from Student to Licensed Agent, one Connecticut town at a time. Each town is an exam topic. Sessions are built for a few minutes between rides: three questions, one thumb, and the same question still waiting when you come back.
+
+This is a study aid. It is not a PSI exam, not a Department of Consumer Protection product, and not a substitute for the statutes, the regulations, or the candidate bulletin.
+
+## Play
+
+Open the site, or run it locally (see below). Progress stays in this browser (`localStorage`). Nothing is sent to a server.
+
+- **Road.** Three questions at the next town. A miss spends Coffee, Fuel, Calm, or Notes. Three correct answers in a row put a supply back. An empty supply is a pull-over refill, not a failed trip.
+- **Towns.** Milford through Hartford, plus Waterbury for math. Every town is open. The mastery meter is your score on items you have already answered.
+- **Math Pass.** Commission, splits, seller proceeds, prorations, Connecticut conveyance tax, loan-to-value, PITI, area, cap rate, equity, points, and a few related drills. The steps appear after you answer.
+- **Mock exam.** National portion: 80 questions, 120 minutes. Connecticut portion: 35 questions, 45 minutes. Both: 115 questions, 165 minutes. The practice pass line is 70 percent, matching the salesperson bulletin. The clock pauses if you leave the page. The real exam clock does not.
+- **Review.** Missed questions come back immediately. A correct answer waits longer the next time.
+- **Exam date.** Type your own date under Exam date and sound. Change it whenever you want. Sound is off until you turn it on.
+
+The app is an installable PWA. Add it to your home screen after it loads once; the service worker keeps the question bank available offline.
+
+## Run locally
+
+No build step is required to play. From this folder:
+
+```bash
+python3 -m http.server 8080
+```
+
+Then open `http://127.0.0.1:8080/`.
+
+Check the game rules and the bank:
+
+```bash
+node scripts/test_game.mjs
+```
+
+## Add questions
+
+Questions live in `scripts/bank_ct.py`, `scripts/bank_national.py`, `scripts/bank_national_b.py`, and the math generator in `scripts/build_bank.py`. Rebuild the file the site actually loads:
+
+```bash
+python3 scripts/build_bank.py
+```
+
+That writes `data/questions.json`. Each item needs a stem, one correct answer, three wrong answers, and an explanation. Connecticut items need a `source` with a `label` and a `url` pointing at a public official page. Math items need `steps`. Do not copy questions from a textbook, a paid prep course, or PSI's sample items.
+
+Topic weights in `TOPICS` must keep adding up to 80 for the national portion and 35 for the Connecticut portion. Those weights are how the mock exam draws its mix. The Math Pass topic supplies the national calculations block (weight 6) and is not a stop on the road.
+
+## Sources
+
+Questions were written for this project from public official materials:
+
+- PSI Connecticut Real Estate candidate information, updated November 13, 2025: [test-takers.psiexams.com/ctre](https://test-takers.psiexams.com/ctre)
+- Connecticut Department of Consumer Protection, [salesperson initial exam](https://portal.ct.gov/dcp/license-services-division/all-license-applications/real-estate-salesperson---initialexam), [continuing education](https://portal.ct.gov/dcp/continuing-education/real-estate-salesperson---continuing-education), and the [guaranty fund](https://portal.ct.gov/dcp/common-elements/consumer-facts-and-contacts/real-estate-guaranty-fund)
+- [Connecticut General Statutes, Chapter 392](https://www.cga.ct.gov/current/pub/chap_392.htm) (real estate brokers and salespersons)
+- [Regulations of Connecticut State Agencies](https://eregulations.ct.gov/eRegsPortal/Browse/RCSA/Title_20Subtitle_20-328Section_20-328-1a.html) on licensee conduct (sections 20-328-1a through 20-328-10a)
+- [Chapter 223](https://www.cga.ct.gov/current/pub/chap_223.htm) (real estate conveyance tax, §§ 12-494 to 12-498)
+- [Chapter 814c](https://www.cga.ct.gov/current/pub/chap_814c.htm) (discriminatory housing practices)
+- [Chapter 831](https://www.cga.ct.gov/current/pub/chap_831.htm) (security deposits, § 47a-21)
+- [§ 47-37](https://www.cga.ct.gov/current/pub/chap_822.htm#sec_47-37) (prescriptive easements) and [§ 52-575](https://www.cga.ct.gov/current/pub/chap_926.htm#sec_52-575)
+- Federal rules used only on national items: Fair Housing Act (42 USC 3604), lead-based paint disclosure (42 USC 4852d), RESPA (12 USC 2607), Regulation Z / TRID (12 CFR 1026.19), ECOA (15 USC 1691), Sherman Act (15 USC 1), ADA Title III, and the FTC Telemarketing Sales Rule
+
+Conveyance-tax math uses the rates in § 12-494 and assumes the town has **not** adopted an extra local tax. Continuing-education dates in the bank follow the DCP page for the cycle March 1, 2026 through February 28, 2028. Recheck that page when the cycle changes.
+
+Figures that could not be pinned to a stable official text were left out. That includes the current security-deposit interest rate (it is reset from the deposit index), any dollar cap on the guaranty-fund balance, Connecticut recording priority, the common-interest resale-certificate cancellation window, and an appraisal de minimis dollar cutoff. Leasing and property management is the shortest national topic because the outline gives it the smallest share of the exam. Connecticut agency is covered, with fewer items than licensing or conduct.
+
+## Deploy
+
+Pushes to `main` run `.github/workflows/pages.yml`, which publishes this folder with GitHub Pages. The site uses relative paths so it works as a project site.
+
+## Disclaimer
+
+CT License Trail is an unofficial study aid. Exam rules, fees, tax rates, and license deadlines change. Read the current PSI bulletin, the Department of Consumer Protection pages, the General Statutes, and the regulations before you rely on a number. Nothing here is legal advice or a promise about an exam result.

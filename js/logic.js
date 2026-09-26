@@ -1,0 +1,298 @@
+/** Pure game rules for CT License Trail. No DOM. */
+
+export const STORAGE_KEY = "ct-license-trail-v1";
+export const SUPPLY_MAX = 8;
+export const SUPPLIES = [
+  { id: "coffee", label: "Coffee", hint: "Focus for the next question" },
+  { id: "fuel", label: "Fuel", hint: "Miles left in this sitting" },
+  { id: "calm", label: "Calm", hint: "Room to miss one and keep going" },
+  { id: "notes", label: "Notes", hint: "The pages you can still trust" },
+];
+
+export const LEVELS = [
+  [0, "Student"],
+  [80, "Notebook Rider"],
+  [200, "Town Reader"],
+  [400, "Clause Spotter"],
+  [700, "Disclosure Scout"],
+  [1100, "Road Scholar"],
+  [1600, "Closing Crew"],
+  [2200, "License Ready"],
+  [3000, "Licensed Agent"],
+];
+
+const SUPPLY_FOR_TOPIC = {
+  math: "notes",
+  financing: "fuel",
+  contracts: "calm",
+  agency: "calm",
+  "ct-agency": "calm",
+  disclosures: "notes",
+  "ct-laws": "notes",
+  practice: "coffee",
+  "ct-conduct": "coffee",
+};
+
+export function createState() {
+  return {
+    v: 1,
+    xp: 0,
+    supplies: { coffee: 6, fuel: 6, calm: 6, notes: 6 },
+    streak: { count: 0, lastDay: null },
+    answerStreak: 0,
+    bestStreak: 0,
+    stats: { answered: 0, correct: 0 },
+    topics: {},
+    review: {},
+    journey: null,
+    routeIndex: 0,
+    examDate: null,
+    settings: { sound: false },
+    mock: null,
+    session: null,
+    introSeen: false,
+    lastScreen: "home",
+  };
+}
+
+export function todayKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function previousDay(key) {
+  const [y, m, d] = key.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - 1);
+  return todayKey(dt);
+}
+
+export function levelInfo(xp) {
+  let current = LEVELS[0];
+  let next = LEVELS[1] || null;
+  for (let i = 0; i < LEVELS.length; i += 1) {
+    if (xp >= LEVELS[i][0]) {
+      current = LEVELS[i];
+      next = LEVELS[i + 1] || null;
+    }
+  }
+  const floor = current[0];
+  const ceil = next ? next[0] : floor + 1;
+  const pct = next ? Math.min(100, Math.round(((xp - floor) / (ceil - floor)) * 100)) : 100;
+  return { name: current[1], xp, nextName: next ? next[1] : null, nextAt: next ? next[0] : null, pct };
+}
+
+export function daysUntil(examDate, today = todayKey()) {
+  if (!examDate) return null;
+  const [y, m, d] = examDate.split("-").map(Number);
+  const [ty, tm, td] = today.split("-").map(Number);
+  const exam = Date.UTC(y, m - 1, d);
+  const now = Date.UTC(ty, tm - 1, td);
+  return Math.round((exam - now) / 86400000);
+}
+
+export function topicStats(state, topicId) {
+  return state.topics[topicId] || { seen: 0, correct: 0 };
+}
+
+export function masteryPercent(state, topicId) {
+  const row = topicStats(state, topicId);
+  if (!row.seen) return 0;
+  return Math.round((row.correct / row.seen) * 100);
+}
+
+function touchStreak(state, day) {
+  if (state.streak.lastDay === day) return;
+  if (state.streak.lastDay === previousDay(day)) state.streak.count += 1;
+  else state.streak.count = 1;
+  state.streak.lastDay = day;
+}
+
+function clampSupply(state, id) {
+  state.supplies[id] = Math.max(0, Math.min(SUPPLY_MAX, state.supplies[id]));
+}
+
+function lowestSupply(state) {
+  return SUPPLIES.reduce((best, row) => (
+    state.supplies[row.id] < state.supplies[best] ? row.id : best
+  ), SUPPLIES[0].id);
+}
+
+function schedule(state, questionId, correct, now) {
+  const prior = state.review[questionId] || { ease: 2.3, interval: 0, reps: 0, lapses: 0, due: now };
+  if (!correct) {
+    state.review[questionId] = {
+      ease: Math.max(1.3, prior.ease - 0.2),
+      interval: 0,
+      reps: 0,
+      lapses: prior.lapses + 1,
+      due: now,
+    };
+    return;
+  }
+  const interval = prior.reps === 0 ? 1 : Math.max(1, Math.round(prior.interval * prior.ease));
+  state.review[questionId] = {
+    ease: prior.ease,
+    interval,
+    reps: prior.reps + 1,
+    lapses: prior.lapses,
+    due: now + interval * 86400000,
+  };
+}
+
+export function answerQuestion(state, question, choiceIndex, now = Date.now(), day = todayKey()) {
+  const next = structuredClone(state);
+  const correct = choiceIndex === question.answer;
+  touchStreak(next, day);
+  next.stats.answered += 1;
+  if (correct) {
+    next.stats.correct += 1;
+    next.answerStreak += 1;
+    next.bestStreak = Math.max(next.bestStreak, next.answerStreak);
+  } else {
+    next.answerStreak = 0;
+  }
+  const row = topicStats(next, question.topic);
+  row.seen += 1;
+  if (correct) row.correct += 1;
+  next.topics[question.topic] = row;
+
+  const xpGain = correct ? 10 + Math.min(next.answerStreak, 5) * 2 : 3;
+  next.xp += xpGain;
+
+  let supplyId = null;
+  let supplyDelta = 0;
+  let restStop = null;
+  if (!correct) {
+    supplyId = SUPPLY_FOR_TOPIC[question.topic] || "coffee";
+    if (next.supplies[supplyId] <= 0) {
+      supplyId = SUPPLIES.find((row) => next.supplies[row.id] > 0)?.id || supplyId;
+    }
+    if (next.supplies[supplyId] > 0) {
+      next.supplies[supplyId] -= 1;
+      supplyDelta = -1;
+    }
+    if (next.supplies[supplyId] <= 0) {
+      next.supplies[supplyId] = 3;
+      restStop = supplyId;
+    }
+  } else if (next.answerStreak > 0 && next.answerStreak % 3 === 0) {
+    supplyId = lowestSupply(next);
+    if (next.supplies[supplyId] < SUPPLY_MAX) {
+      next.supplies[supplyId] += 1;
+      supplyDelta = 1;
+    }
+  }
+  if (supplyId) clampSupply(next, supplyId);
+  schedule(next, question.id, correct, now);
+  return { state: next, correct, xpGain, supplyId, supplyDelta, restStop };
+}
+
+export function dueReviews(state, now = Date.now()) {
+  return Object.entries(state.review)
+    .filter(([, row]) => row.due <= now)
+    .map(([id]) => id);
+}
+
+export function pickQuestions(questions, topicId, count, state, rng = Math.random) {
+  const pool = questions.filter((q) => q.topic === topicId);
+  const unseen = pool.filter((q) => !state.topics[topicId] || !state.review[q.id]);
+  const missed = pool.filter((q) => state.review[q.id] && state.review[q.id].lapses > 0 && state.review[q.id].reps === 0);
+  const ranked = [...missed, ...unseen.filter((q) => !missed.includes(q)), ...pool];
+  const unique = [];
+  const seen = new Set();
+  for (const q of ranked) {
+    if (seen.has(q.id)) continue;
+    seen.add(q.id);
+    unique.push(q);
+  }
+  for (let i = unique.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [unique[i], unique[j]] = [unique[j], unique[i]];
+  }
+  // Keep missed questions near the front, then fill.
+  const front = missed.map((q) => q.id);
+  const rest = unique.filter((q) => !front.includes(q.id));
+  const ordered = [...unique.filter((q) => front.includes(q.id)), ...rest];
+  return ordered.slice(0, count).map((q) => q.id);
+}
+
+function shuffleIds(ids, rng) {
+  const copy = [...ids];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export function sampleExam(questions, topics, mode, rng = Math.random) {
+  const used = new Set();
+  const sections = [];
+  const take = (topicId, count) => {
+    const pool = questions.filter((q) => q.pools.includes(topicId) && !used.has(q.id));
+    const copy = [...pool];
+    for (let i = copy.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(rng() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    const chosen = copy.slice(0, count);
+    chosen.forEach((q) => used.add(q.id));
+    return chosen.map((q) => q.id);
+  };
+  const want = (portion) => topics.filter((t) => t.portion === portion);
+  if (mode === "national" || mode === "both") {
+    const ids = [];
+    want("national").forEach((topic) => ids.push(...take(topic.id, topic.weight)));
+    sections.push({ id: "national", label: "National portion", minutes: 120, ids: shuffleIds(ids, rng) });
+  }
+  if (mode === "state" || mode === "both") {
+    const ids = [];
+    want("state").forEach((topic) => ids.push(...take(topic.id, topic.weight)));
+    sections.push({ id: "state", label: "Connecticut portion", minutes: 45, ids: shuffleIds(ids, rng) });
+  }
+  const ids = sections.flatMap((section) => section.ids);
+  const minutes = mode === "both" ? 165 : sections[0].minutes;
+  return { ids, sections, minutes, limitMs: minutes * 60 * 1000 };
+}
+
+export function scoreExam(ids, answers, questionsById) {
+  let correct = 0;
+  const byTopic = {};
+  ids.forEach((id) => {
+    const q = questionsById[id];
+    const ok = answers[id] === q.answer;
+    if (ok) correct += 1;
+    if (!byTopic[q.topic]) byTopic[q.topic] = { correct: 0, total: 0 };
+    byTopic[q.topic].total += 1;
+    if (ok) byTopic[q.topic].correct += 1;
+  });
+  const total = ids.length;
+  const percent = total ? Math.round((correct / total) * 100) : 0;
+  return { correct, total, percent, passed: percent >= 70, byTopic };
+}
+
+export function recordExam(state, ids, answers, questionsById, now = Date.now(), day = todayKey()) {
+  const next = structuredClone(state);
+  touchStreak(next, day);
+  const result = scoreExam(ids, answers, questionsById);
+  ids.forEach((id) => {
+    const q = questionsById[id];
+    const ok = answers[id] === q.answer;
+    const row = topicStats(next, q.topic);
+    row.seen += 1;
+    if (ok) row.correct += 1;
+    next.topics[q.topic] = row;
+    if (!ok) schedule(next, id, false, now);
+  });
+  next.xp += result.correct * 4;
+  next.stats.answered += result.total;
+  next.stats.correct += result.correct;
+  return { state: next, result };
+}
+
+export function roadTopics(topics) {
+  return topics.filter((topic) => topic.id !== "math");
+}
