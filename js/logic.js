@@ -528,16 +528,20 @@ export function sampleExam(questions, topics, mode, rng = Math.random, chapters 
   if (mode === "national" || mode === "both") {
     const ids = [];
     want("national").forEach((topic) => ids.push(...take(topic.id, topic.weight)));
-    sections.push({ id: "national", label: "General portion", minutes: 120, ids: shuffleIds(ids, rng) });
+    sections.push({ id: "national", label: "General portion", minutes: EXAM_SHAPE.nationalMinutes, ids: shuffleIds(ids, rng) });
   }
   if (mode === "state" || mode === "both") {
     const ids = [];
     want("state").forEach((topic) => ids.push(...take(topic.id, topic.weight)));
-    sections.push({ id: "state", label: "Connecticut portion", minutes: 45, ids: shuffleIds(ids, rng) });
+    sections.push({ id: "state", label: "Connecticut portion", minutes: EXAM_SHAPE.stateMinutes, ids: shuffleIds(ids, rng) });
   }
   const ids = sections.flatMap((section) => section.ids);
-  const bulletinCount = mode === "both" ? 115 : mode === "state" ? 35 : 80;
-  const bulletinMinutes = mode === "both" ? 165 : mode === "state" ? 45 : 120;
+  const bulletinCount = mode === "both"
+    ? EXAM_SHAPE.nationalCount + EXAM_SHAPE.stateCount
+    : mode === "state" ? EXAM_SHAPE.stateCount : EXAM_SHAPE.nationalCount;
+  const bulletinMinutes = mode === "both"
+    ? EXAM_SHAPE.bothMinutes
+    : mode === "state" ? EXAM_SHAPE.stateMinutes : EXAM_SHAPE.nationalMinutes;
   const minutes = chapters && ids.length < bulletinCount
     ? Math.max(5, Math.round(bulletinMinutes * ids.length / bulletinCount))
     : bulletinMinutes;
