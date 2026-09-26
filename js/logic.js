@@ -47,7 +47,7 @@ export function createState() {
     journey: null,
     routeIndex: 0,
     examDate: null,
-    settings: { sound: false },
+    settings: { sound: false, theme: "classic" },
     mock: null,
     session: null,
     introSeen: false,
@@ -65,6 +65,37 @@ export function createState() {
 const WEEKDAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export const FALLBACK_COMPLETED = [2, 3, 6, 7, 14, 15, 16, 17, 20];
+
+export const THEMES = [
+  { id: "classic", name: "Classic", note: "The question, with no extra scene." },
+  { id: "outdoors", name: "Outdoors", note: "A trail, shore, or field around the same facts." },
+  { id: "adventure", name: "Adventure", note: "A road or ridge around the same facts." },
+  { id: "history", name: "History", note: "An older town setting around the same facts." },
+];
+
+export function themeId(state) {
+  const id = state?.settings?.theme;
+  return THEMES.some((row) => row.id === id) ? id : "classic";
+}
+
+export function displayStem(question, theme = "classic") {
+  const flavor = theme && theme !== "classic" ? question?.flavor?.[theme] : "";
+  if (!flavor) return question?.stem || "";
+  return `${flavor} ${question.stem}`;
+}
+
+export function ctLawEventsForStop(questions, topicId, chapters, avoidIds = []) {
+  const allowed = new Set(chapters || []);
+  const avoid = new Set(avoidIds);
+  const stopChapters = new Set(
+    (questions || [])
+      .filter((q) => q.topic === topicId && allowed.has(q.chapter))
+      .map((q) => q.chapter),
+  );
+  return (questions || []).filter((q) => (
+    q.ctLaw && q.event && allowed.has(q.chapter) && stopChapters.has(q.chapter) && !avoid.has(q.id)
+  ));
+}
 
 export function completedChapters(state, course) {
   const known = new Set((course?.chapters || []).map((row) => row.n));

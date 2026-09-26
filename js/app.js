@@ -2,6 +2,7 @@ import {
   STORAGE_KEY, SUPPLIES, SUPPLY_MAX, createState, levelInfo, daysUntil, todayKey,
   masteryPercent, answerQuestion, dueReviews, pickQuestions, sampleExam, recordExam,
   roadTopics, puzzleForDate, awardCrossword, completedChapters,
+  themeId, displayStem, ctLawEventsForStop, THEMES,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -154,10 +155,16 @@ function startJourney(topicId) {
     say("That town has no questions in the chapters you've completed.");
     return;
   }
-  const events = bank.questions.filter((q) => q.event && q.topic === topicId && chapters.includes(q.chapter) && !ids.includes(q.id));
-  if (events.length && Math.random() < 0.75 && ids.length > 1) {
-    const event = events[Math.floor(Math.random() * events.length)];
+  const ctEvents = ctLawEventsForStop(bank.questions, topicId, chapters, ids);
+  if (ctEvents.length && ids.length > 1) {
+    const event = ctEvents[Math.floor(Math.random() * ctEvents.length)];
     ids.splice(1, 1, event.id);
+  } else {
+    const events = bank.questions.filter((q) => q.event && q.topic === topicId && chapters.includes(q.chapter) && !ids.includes(q.id));
+    if (events.length && Math.random() < 0.75 && ids.length > 1) {
+      const event = events[Math.floor(Math.random() * events.length)];
+      ids.splice(1, 1, event.id);
+    }
   }
   startSession("journey", ids, topicId);
 }
@@ -270,10 +277,11 @@ function viewQuestion() {
   const keys = ["1", "2", "3", "4"];
   const where = session.kind === "review" ? "Review" : session.kind === "math" ? "Math Pass" : topic.town;
   const chapterBit = question.chapter ? chapterTitle(question.chapter) : "";
+  const lawBadge = question.ctLaw ? `<span class="badge-ct">CT Law</span>` : "";
   main.innerHTML = `
     <article class="card">
-      <p class="kicker">${esc(where)}${chapterBit ? ` · ${esc(chapterBit)}` : ""} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
-      <h2 class="stem" id="stem">${esc(question.stem)}</h2>
+      <p class="kicker">${lawBadge}${esc(where)}${chapterBit ? ` · ${esc(chapterBit)}` : ""} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
+      <h2 class="stem" id="stem">${esc(displayStem(question, themeId(state)))}</h2>
       <div class="stack" role="group" aria-labelledby="stem">
         ${question.choices.map((choice, index) => {
           let cls = "choice";
@@ -409,9 +417,9 @@ function viewMock() {
   const chosen = mock.answers[question.id];
   main.innerHTML = `
     <article class="card">
-      <p class="kicker">${esc(topic.name)}${question.chapter ? ` · ${esc(chapterTitle(question.chapter))}` : ""} · ${mock.index + 1} of ${mock.ids.length}${mock.everyChapter ? " · every chapter" : " · completed chapters"}</p>
+      <p class="kicker">${question.ctLaw ? `<span class="badge-ct">CT Law</span>` : ""}${esc(topic.name)}${question.chapter ? ` · ${esc(chapterTitle(question.chapter))}` : ""} · ${mock.index + 1} of ${mock.ids.length}${mock.everyChapter ? " · every chapter" : " · completed chapters"}</p>
       <p class="timer ${left < 5 * 60 * 1000 ? "low" : ""}" style="color:${left < 5 * 60 * 1000 ? "var(--bad)" : "var(--pine)"}" aria-live="off">Time left ${formatClock(left)}</p>
-      <h2 class="stem" id="stem">${esc(question.stem)}</h2>
+      <h2 class="stem" id="stem">${esc(displayStem(question, themeId(state)))}</h2>
       <div class="stack" role="group" aria-labelledby="stem">
         ${question.choices.map((choice, index) => `
           <button class="choice ${chosen === index ? "picked" : ""}" data-mock-choice="${index}" aria-pressed="${chosen === index ? "true" : "false"}">
@@ -504,6 +512,15 @@ function viewSettings() {
         <button class="btn btn-primary" data-act="save-date">Save date</button>
         <button class="btn btn-quiet" data-act="clear-date">Clear date</button>
       </div>
+    </section>
+    <section class="card">
+      <h2>Theme</h2>
+      <p>Outdoors, Adventure, and History add a scene around a question. Classic leaves the question as written. The scene never changes the facts, the choices, or the rule.</p>
+      <div class="stack">
+        ${THEMES.map((row) => `
+          <button class="btn ${themeId(state) === row.id ? "btn-pine" : "btn-quiet"}" data-act="theme" data-theme="${row.id}" aria-pressed="${themeId(state) === row.id ? "true" : "false"}">${esc(row.name)}</button>`).join("")}
+      </div>
+      <p class="muted">${esc(THEMES.find((row) => row.id === themeId(state))?.note || "")}</p>
     </section>
     <section class="card">
       <h2>Sound</h2>
@@ -1115,6 +1132,11 @@ function onClick(event) {
     state.examDate = null;
     save();
     go("settings");
+  } else if (act === "theme") {
+    const next = THEMES.some((row) => row.id === button.dataset.theme) ? button.dataset.theme : "classic";
+    state.settings.theme = next;
+    save();
+    viewSettings();
   } else if (act === "toggle-sound") {
     state.settings.sound = !state.settings.sound;
     save();
