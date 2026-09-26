@@ -306,7 +306,8 @@ function viewHome() {
   }
   main.innerHTML = `
     <h2 class="dash-title">Trailhead</h2>
-    <section class="trail-card dash-span">
+    <div class="dash-layout">
+    <section class="trail-card trail-map">
       ${forestBanner()}
       <p class="kicker">Connecticut trail</p>
       ${road.length ? `<ol class="blaze">
@@ -328,7 +329,7 @@ function viewHome() {
       </ol>` : `<p>Check a chapter to open the towns on this trail.</p>`}
     </section>
     <div class="dash-grid">
-      <article class="trail-card dash-span">
+      <article class="trail-card dash-span tile-continue">
         <p class="kicker">Continue the Trail</p>
         <h3>${resumeQuiz ? "Same question, still open" : town ? esc(town.town) : "No town yet"}</h3>
         <p>${town ? esc(town.blurb) : "The trail uses chapters you have checked."}</p>
@@ -340,17 +341,17 @@ function viewHome() {
           <button class="btn btn-primary" data-act="continue" ${!resumeQuiz && !town ? "disabled" : ""}>${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
         </div>
       </article>
-      <button class="trail-card tile" data-act="daily">
+      <button class="trail-card tile tile-xw" data-act="daily">
         <span class="tile-top">${flameMark(gridStreak > 0)} <span class="kicker">Today's Crossword</span></span>
         <strong class="dash-num">${solved ? "Done" : "Not yet"}</strong>
         <span class="muted">${gridStreak} day streak</span>
       </button>
-      <button class="trail-card tile" data-act="settings">
+      <button class="trail-card tile tile-count" data-act="settings">
         <span class="kicker">Exam Countdown</span>
         <strong class="dash-num">${esc(dateBig)}</strong>
         <span class="muted">${esc(dateLine)}</span>
       </button>
-      <article class="trail-card dash-span">
+      <article class="trail-card dash-span tile-ready">
         <p class="kicker">Readiness</p>
         ${ready.map((row) => `
           <p class="ready-line"><strong>${esc(row.label)}</strong> <span>${row.count} on the exam · ${row.percent}% · ${esc(row.status)}</span></p>
@@ -358,7 +359,7 @@ function viewHome() {
         `).join("")}
         <p class="muted">National portion is ${EXAM_SHAPE.nationalCount} questions. Connecticut portion is ${EXAM_SHAPE.stateCount}. Each needs ${EXAM_SHAPE.passingPercent}%.</p>
       </article>
-      <article class="trail-card">
+      <article class="trail-card tile-chapters">
         <p class="kicker">Chapters</p>
         <p class="dash-num">${chapterDone}/${chapterTotal}</p>
         <div class="stack">
@@ -366,23 +367,24 @@ function viewHome() {
           <button class="btn btn-quiet" data-act="settings">Edit checklist</button>
         </div>
       </article>
-      <button class="trail-card tile" data-act="review-tab">
+      <button class="trail-card tile tile-review" data-act="review-tab">
         <span class="kicker">Review queue</span>
         <strong class="dash-num">${due}</strong>
         <span class="muted">${due ? "ready for another look" : "queue is clear"}</span>
       </button>
-      <article class="trail-card ranger">
+      <article class="trail-card ranger tile-ranger">
         <span class="kicker">Ranger badge</span>
         ${rangerBadge()}
         <strong>${esc(level.name)}</strong>
         <span class="muted">${dayStreak}-day streak · ${state.xp} XP</span>
         <div class="meter" aria-hidden="true"><span style="width:${level.pct}%"></span></div>
       </article>
-      <button class="trail-card tile" data-act="math-start" ${mathCount ? "" : "disabled"}>
+      <button class="trail-card tile tile-math" data-act="math-start" ${mathCount ? "" : "disabled"}>
         <span class="kicker">Math Pass</span>
         <strong class="dash-num">${mathCount}</strong>
         <span class="muted">Quick drill</span>
       </button>
+    </div>
     </div>
     <p class="fine dash-note">Unofficial study aid. Not affiliated with PSI or the Department of Consumer Protection.</p>`;
 }
@@ -423,7 +425,8 @@ function viewQuestion() {
           </button>`;
         }).join("")}
       </div>
-      ${!quizMode && answered ? explainBlock(question, session.choice) : ""}
+        ${answered ? "" : `<p class="fine keys-hint">Press 1 to 4 to answer.</p>`}
+        ${!quizMode && answered ? explainBlock(question, session.choice) : ""}
       ${session.note ? `<div class="note">${esc(session.note)}</div>` : ""}
       <div class="dock">
         ${question.math ? `<button class="btn btn-quiet" data-act="calc">Calculator</button>` : ""}
@@ -579,6 +582,7 @@ function viewMock() {
             <span class="key" aria-hidden="true">${index + 1}</span><span>${esc(choice)}</span>
           </button>`).join("")}
       </div>
+      <p class="fine keys-hint">Press 1 to 4 to answer.</p>
       <div class="row" style="margin-top:12px">
         <button class="btn btn-quiet" data-act="mock-prev" ${mock.index === 0 ? "disabled" : ""}>Back</button>
         <button class="btn btn-quiet" data-act="mock-flag">${mock.flagged[question.id] ? "Unflag" : "Flag"}</button>
@@ -1186,6 +1190,7 @@ function viewDaily() {
       </div>
       <div class="xw-dock">
         <p class="xw-clue"></p>
+        <p class="muted xw-keys">Type a letter. Arrow keys move. Tab jumps to the next clue.</p>
         <div class="xw-board" aria-label="Keyboard">
           ${keyRows.map((row) => `<div class="xw-keyrow">${[...row].map((ch) => `<button type="button" data-xw="${ch}" aria-label="${ch}">${ch}</button>`).join("")}</div>`).join("")}
           <div class="xw-keyrow xw-keyrow-wide">
@@ -1316,6 +1321,7 @@ function xwType(letter) {
   finishIfSolved(puzzle, prog, picked.dateKey);
   save();
   paintDaily();
+  focusCrosswordCell();
 }
 
 function xwBackspace() {
@@ -1370,20 +1376,56 @@ function xwTool(kind) {
   paintDaily();
 }
 
+function focusCrosswordCell() {
+  const picked = todayPuzzle();
+  if (!picked) return;
+  const prog = state.crossword?.progress?.[slotKey(picked)];
+  if (!prog) return;
+  const cell = main.querySelector(`.xw-cell[data-r="${prog.row}"][data-c="${prog.col}"]`);
+  if (cell) cell.focus({ preventScroll: true });
+}
+
 function xwArrow(key) {
   const picked = todayPuzzle();
   if (!picked) return;
   const puzzle = picked.puzzle;
   const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   const step = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[key];
-  const nr = prog.row + step[0];
-  const nc = prog.col + step[1];
-  if (nr < 0 || nc < 0 || nr >= puzzle.size || nc >= puzzle.size || isBlack(puzzle, nr, nc)) return;
-  prog.row = nr;
-  prog.col = nc;
+  if (!step) return;
+  let row = prog.row;
+  let col = prog.col;
+  while (true) {
+    row += step[0];
+    col += step[1];
+    if (row < 0 || col < 0 || row >= puzzle.size || col >= puzzle.size) return;
+    if (!isBlack(puzzle, row, col)) break;
+  }
+  prog.row = row;
+  prog.col = col;
   prog.dir = key === "ArrowLeft" || key === "ArrowRight" ? "across" : "down";
   save();
   paintDaily();
+  focusCrosswordCell();
+}
+
+function xwNextClue(forward) {
+  const picked = todayPuzzle();
+  if (!picked) return;
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
+  if (prog.done) return;
+  const list = prog.dir === "across" ? puzzle.across : puzzle.down;
+  if (!list.length) return;
+  const current = entryAt(puzzle, prog.row, prog.col, prog.dir);
+  let index = list.indexOf(current);
+  if (index < 0) index = 0;
+  const step = forward ? 1 : list.length - 1;
+  const entry = list[(index + step) % list.length];
+  prog.row = entry.row;
+  prog.col = entry.col;
+  save();
+  paintDaily();
+  focusCrosswordCell();
 }
 
 function onClick(event) {
@@ -1701,18 +1743,39 @@ function compute(expr) {
   }
 }
 
+function keyInField(event) {
+  const el = event.target;
+  if (!el || !el.tagName) return false;
+  return el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable;
+}
+
+function crosswordKeyTarget(event) {
+  const el = event.target;
+  if (!el || el === document.body || el === document.documentElement) return true;
+  if (el.closest && el.closest(".xw-grid")) return true;
+  return false;
+}
+
 function onKey(event) {
-  if (screen === "daily" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (screen === "daily" && !keyInField(event)) {
     if (!todayPuzzle()) return;
-    if (event.target && (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA")) return;
+    if (event.key === "Tab" && crosswordKeyTarget(event)) {
+      event.preventDefault();
+      xwNextClue(!event.shiftKey);
+      return;
+    }
+    if (!crosswordKeyTarget(event) && event.target?.closest?.("button, a, summary")) return;
     if (event.key === "Backspace") {
       event.preventDefault();
       xwBackspace();
+      focusCrosswordCell();
       return;
     }
     if (event.key === " ") {
       event.preventDefault();
       xwToggle();
+      focusCrosswordCell();
       return;
     }
     if (event.key.startsWith("Arrow")) {
@@ -1726,8 +1789,13 @@ function onKey(event) {
       return;
     }
   }
-  if (screen === "question" && state.session?.phase === "ask" && ["1", "2", "3", "4"].includes(event.key)) {
+  if (keyInField(event) || !["1", "2", "3", "4"].includes(event.key)) return;
+  if (screen === "question" && state.session?.phase === "ask") {
+    event.preventDefault();
     chooseAnswer(Number(event.key) - 1);
+  } else if (screen === "mock" && state.mock && !state.mock.submitted) {
+    event.preventDefault();
+    chooseMock(Number(event.key) - 1);
   }
 }
 
