@@ -6,6 +6,7 @@ import {
   puzzleForDate, awardCrossword, completedChapters, pickQuestions,
   displayStem, ctLawEventsForStop, themeId,
   portionOf, portionReadiness, chapterStudyPlan, hydratePortions, EXAM_SHAPE,
+  cleanDogName, companion, companionCheer, DEFAULT_DOG_NAME, liveStreak,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -135,7 +136,16 @@ for (const q of ctLayer) {
   assert.equal(outdoors, `${q.flavor.outdoors} ${q.stem}`);
   assert.equal(outdoors.includes(q.choices[q.answer]), false);
 }
-assert.equal(themeId(createState()), "classic");
+assert.equal(themeId(createState()), "outdoors");
+assert.equal(createState().settings.dogName, DEFAULT_DOG_NAME);
+assert.equal(cleanDogName("  <Hudson!> "), "Hudson");
+assert.equal(cleanDogName(""), DEFAULT_DOG_NAME);
+assert.equal(companion(createState()).on, true);
+assert.equal(companion({ settings: { dog: false, dogName: "Moss" } }).on, false);
+assert.equal(companionCheer({ settings: { dog: false } }, "2026-09-26"), "");
+assert.ok(companionCheer(createState(), "2026-09-26").includes("Hudson"));
+assert.equal(liveStreak({ count: 4, lastDay: "2026-09-25" }, "2026-09-26"), 4);
+assert.equal(liveStreak({ count: 4, lastDay: "2026-09-01" }, "2026-09-26"), 0);
 const ownershipEvents = ctLawEventsForStop(questions, "ownership", [3, 4, 5], []);
 assert.ok(ownershipEvents.some((q) => q.chapter === 3 && q.ctLaw && q.event));
 assert.equal(ctLawEventsForStop(questions, "ownership", [2], []).length, 0);

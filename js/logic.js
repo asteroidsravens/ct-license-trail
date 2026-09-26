@@ -47,7 +47,7 @@ export function createState() {
     journey: null,
     routeIndex: 0,
     examDate: null,
-    settings: { sound: false, theme: "classic" },
+    settings: { sound: false, theme: "outdoors", dog: true, dogName: "Hudson" },
     mock: null,
     session: null,
     portions: {
@@ -80,7 +80,53 @@ export const THEMES = [
 
 export function themeId(state) {
   const id = state?.settings?.theme;
-  return THEMES.some((row) => row.id === id) ? id : "classic";
+  return THEMES.some((row) => row.id === id) ? id : "outdoors";
+}
+
+export const DEFAULT_DOG_NAME = "Hudson";
+
+export function cleanDogName(raw) {
+  const cleaned = String(raw ?? "")
+    .replace(/[^A-Za-z .'-]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 20)
+    .trim();
+  return cleaned || DEFAULT_DOG_NAME;
+}
+
+export function companion(state) {
+  const settings = state?.settings || {};
+  return {
+    on: settings.dog !== false,
+    name: cleanDogName(settings.dogName || DEFAULT_DOG_NAME),
+  };
+}
+
+export function liveStreak(streak, today) {
+  if (!streak?.lastDay || !streak.count) return 0;
+  if (streak.lastDay === today || streak.lastDay === previousDay(today)) return streak.count;
+  return 0;
+}
+
+export function companionCheer(state, today) {
+  const pal = companion(state);
+  if (!pal.on) return "";
+  const name = pal.name;
+  const solved = Boolean(state?.crossword?.solved?.[today]);
+  const study = liveStreak(state?.streak, today);
+  const grid = liveStreak(state?.crossword?.streak, today);
+  if (solved) return `${name} wags. Today's grid is done.`;
+  if (study >= 3) return `${name} likes this run of days.`;
+  if (grid >= 2) return `${name} is keeping the crossword streak.`;
+  const lines = [
+    `${name} waits at the trailhead.`,
+    `${name} found shade under the pines.`,
+    `${name} noses the next blaze.`,
+    `${name} is ready when you are.`,
+  ];
+  const n = Number(String(today || "0").replace(/\D/g, "").slice(-2)) || 0;
+  return lines[n % lines.length];
 }
 
 export function displayStem(question, theme = "classic") {
