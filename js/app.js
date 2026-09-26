@@ -370,10 +370,10 @@ function viewHome() {
       <article class="trail-card dash-span tile-ready">
         <p class="kicker">Readiness</p>
         ${ready.map((row) => `
-          <p class="ready-line"><strong>${esc(row.label)}</strong> <span>${row.count} on the exam · ${row.percent}% · ${esc(row.status)}</span></p>
+          <p class="ready-line"><strong>${esc(row.label)}</strong> <span>${row.count} questions, ${row.minutes} minutes · ${row.percent}% · ${esc(row.status)}</span></p>
           <div class="meter" aria-hidden="true"><span style="width:${row.seen ? row.percent : 0}%"></span></div>
         `).join("")}
-        <p class="muted">National portion is ${EXAM_SHAPE.nationalCount} questions. Connecticut portion is ${EXAM_SHAPE.stateCount}. Each needs ${EXAM_SHAPE.passingPercent}%.</p>
+        <p class="muted">PSI bulletin: ${EXAM_SHAPE.nationalCount} general questions, ${EXAM_SHAPE.nationalMinutes} minutes; ${EXAM_SHAPE.stateCount} Connecticut questions, ${EXAM_SHAPE.stateMinutes} minutes. Each portion needs ${EXAM_SHAPE.passingPercent}%.</p>
       </article>
       <article class="trail-card tile-chapters">
         <p class="kicker">Chapters</p>

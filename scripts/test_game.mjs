@@ -37,6 +37,19 @@ const national = bank.topics.filter((t) => t.portion === "national");
 const state = bank.topics.filter((t) => t.portion === "state");
 assert.equal(national.reduce((n, t) => n + t.weight, 0), 80);
 assert.equal(state.reduce((n, t) => n + t.weight, 0), 35);
+assert.equal(EXAM_SHAPE.nationalCount, 80);
+assert.equal(EXAM_SHAPE.nationalMinutes, 120);
+assert.equal(EXAM_SHAPE.stateCount, 35);
+assert.equal(EXAM_SHAPE.stateMinutes, 45);
+assert.equal(EXAM_SHAPE.nationalCount + EXAM_SHAPE.stateCount, 115);
+assert.equal(EXAM_SHAPE.bothMinutes, 165);
+assert.equal(EXAM_SHAPE.passingPercent, 70);
+assert.match(EXAM_SHAPE.bulletin, /PSI/);
+const statePortion = questions.find((item) => item.stem.includes("salesperson state portion"));
+assert.equal(statePortion.choices[statePortion.answer], "35 scored questions and 45 minutes");
+assert.ok(statePortion.choices.includes("30 scored questions and 30 minutes"));
+assert.match(statePortion.source.label, /PSI/);
+assert.match(statePortion.source.url, /psiexams\.com/);
 assert.equal(roadTopics(bank.topics).some((t) => t.id === "math"), false);
 
 for (const topic of bank.topics) {
