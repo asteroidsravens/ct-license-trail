@@ -6,6 +6,7 @@ import {
   EXAM_SHAPE, portionReadiness, hydratePortions, chapterStudyPlan,
   companion, companionCheer, cleanDogName, liveStreak, DEFAULT_DOG_NAME,
   searchBuddy, tutorUrl, spokenLetters, trailBuddyLines,
+  formatMoney, commissionAmount, residentialConveyance, buyerTaxCredit, millTax, incomeValue,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -430,7 +431,10 @@ function viewQuestion() {
   const quizChoice = quizMode ? session.answers?.[question.id] : null;
   const chapterBit = question.chapter ? chapterTitle(question.chapter) : "";
   const lawBadge = question.ctLaw ? `<span class="badge-ct">CT Law</span>` : "";
+  const onChapterWalk = ["chapter-principles", "chapter-ct", "chapter-quiz"].includes(session.kind);
+  const steps = onChapterWalk ? stepNav(question.chapter || state.loop?.chapter) : "";
   main.innerHTML = `
+    ${steps}
     <article class="card">
       <p class="kicker">${lawBadge}${esc(where)}${chapterBit ? ` · ${esc(chapterBit)}` : ""} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
       <h2 class="stem" id="stem">${esc(displayStem(question, themeId(state)))}</h2>
@@ -534,18 +538,8 @@ function viewMap() {
 }
 
 function viewMathHome() {
-  const mathCount = bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).length;
-  main.innerHTML = `
-    <section class="card">
-      <p class="kicker">Waterbury · Math Pass</p>
-      <h2>Numbers, then the reason</h2>
-      <p class="lede">${mathCount} drills from chapters you've completed. Commission, prorations, conveyance tax, loans, area, and value show up when that chapter is checked. Every one shows the steps after you answer.</p>
-      <div class="stack">
-        <button class="btn btn-primary" data-act="math-start" ${mathCount ? "" : "disabled"}>Work three math items</button>
-        <button class="btn btn-quiet" data-act="calc">Open the calculator</button>
-      </div>
-      <p class="muted">Day-count and who owns closing day are written into each proration, so you are practicing a stated method. Conveyance items use Conn. Gen. Stat. § 12-494 and say when the town has not added an extra local tax.</p>
-    </section>`;
+  main.innerHTML = mathSheet(false);
+  paintMathTools();
 }
 
 function mockDraw(mode) {
@@ -679,22 +673,13 @@ function viewLoop() {
   main.innerHTML = `
     <section class="card">
       <h2>Chapter study</h2>
-      <p class="lede">Each chapter follows the class order: principles and practices, then the Connecticut law for that chapter, then a short quiz. The quiz holds the answers until the end.</p>
+      <p class="lede">Each chapter is three steps: principles and practices, the Connecticut law for that chapter, then a short quiz. The quiz holds the answers until the end. A finished step stays marked on this phone.</p>
       ${rows.length ? "" : `<p>Check at least one chapter you have finished. The loop uses those chapters.</p>`}
-      <div class="stack">
-        ${rows.map((row) => {
-          const done = loopRow(row.n);
-          const bits = [
-            done.principles ? "Principles done" : "Principles",
-            done.ct ? "Connecticut law done" : "Connecticut law",
-            done.quizPercent !== undefined ? `Quiz ${done.quizPercent}%` : "Quiz",
-          ];
-          return `<button class="btn btn-quiet" data-act="study-chapter" data-chapter="${row.n}">
-            <strong>Ch ${row.n}</strong> ${esc(row.name)}
-            <span class="muted" style="display:block">${esc(bits.join(" · "))}</span>
-          </button>`;
-        }).join("")}
-      </div>
+      ${rows.map((row) => `
+        <article class="chapter-walk">
+          <h3>${esc(chapterTitle(row.n))}</h3>
+          ${formulaSteps(row.n, loopRow(row.n))}
+        </article>`).join("")}
     </section>`;
 }
 
@@ -712,6 +697,7 @@ function viewLoopBetween() {
     body = "A short mix from this chapter. Pick an answer on each item. The explanation waits until you finish.";
   }
   main.innerHTML = `
+    ${stepNav(loop.chapter)}
     <section class="card">
       <p class="kicker">${esc(title)}</p>
       <h2>${heading}</h2>
@@ -733,6 +719,7 @@ function viewLoopResult() {
     return `<p><strong>${esc(question.stem)}</strong> ${esc(question.explanation)}</p>`;
   }).join("");
   main.innerHTML = `
+    ${stepNav(loop.chapter)}
     <section class="card">
       <p class="kicker">${esc(chapterTitle(loop.chapter))}</p>
       <h2>${quiz.percent >= EXAM_SHAPE.passingPercent ? "Chapter quiz is at 70% or better." : "Chapter quiz is under 70%."}</h2>
@@ -746,21 +733,88 @@ function viewLoopResult() {
 }
 
 function startChapterStudy(chapter) {
+  openLoopStep(chapter, "principles");
+}
+
+function openLoopStep(chapter, step) {
   const plan = chapterStudyPlan(bank.questions, chapter, Math.random);
   if (!plan.principles.length && !plan.ct.length && !plan.quiz.length) {
     say("That chapter has no questions yet.");
     return;
   }
+  const currentKind = { principles: "chapter-principles", ct: "chapter-ct", quiz: "chapter-quiz" }[step];
+  if (state.session?.kind === currentKind && state.loop?.chapter === chapter && screen === "question") return;
   state.loop = {
     chapter,
     principles: plan.principles,
     ct: plan.ct,
     quizIds: plan.quiz,
     phase: "run",
+    next: step,
   };
-  if (plan.principles.length) startSession("chapter-principles", plan.principles, null);
-  else if (plan.ct.length) startSession("chapter-ct", plan.ct, null);
-  else beginChapterQuiz();
+  if (step === "principles") {
+    if (!plan.principles.length) {
+      say("No principles items in this chapter.");
+      return;
+    }
+    startSession("chapter-principles", plan.principles, null);
+    return;
+  }
+  if (step === "ct") {
+    if (!plan.ct.length) {
+      state.loop.phase = "between";
+      state.loop.next = "quiz";
+      save();
+      go("loop");
+      return;
+    }
+    startSession("chapter-ct", plan.ct, null);
+    return;
+  }
+  beginChapterQuiz();
+}
+
+const LOOP_STEPS = [
+  ["principles", "01", "Principles"],
+  ["ct", "02", "Connecticut"],
+  ["quiz", "03", "Quiz"],
+];
+
+function loopStepId() {
+  const kind = state.session?.kind;
+  if (kind === "chapter-principles") return "principles";
+  if (kind === "chapter-ct") return "ct";
+  if (kind === "chapter-quiz") return "quiz";
+  const loop = state.loop;
+  if (loop?.phase === "result") return "quiz";
+  if (loop?.phase === "between") return loop.next === "ct" ? "ct" : "quiz";
+  return "";
+}
+
+function stepNav(chapter) {
+  if (!chapter) return "";
+  const done = loopRow(chapter);
+  const current = loopStepId();
+  const buttons = LOOP_STEPS.map(([id, number, label]) => {
+    const finished = id === "principles" ? done.principles
+      : id === "ct" ? done.ct
+      : done.quizPercent !== undefined;
+    const cls = [current === id ? "active" : "", finished ? "done" : ""].filter(Boolean).join(" ");
+    return `<button type="button" class="${cls}" data-act="loop-step" data-step="${id}" data-chapter="${chapter}" ${current === id ? 'aria-current="step"' : ""}>${number} ${label}</button>`;
+  }).join("");
+  return `<nav class="stepnav" aria-label="Chapter steps"><div class="nav-inner">${buttons}</div></nav>`;
+}
+
+function formulaSteps(chapter, done) {
+  const rows = [
+    ["principles", "01", "Principles and practices", Boolean(done.principles)],
+    ["ct", "02", "Connecticut law", Boolean(done.ct)],
+    ["quiz", "03", "Chapter quiz", done.quizPercent !== undefined],
+  ];
+  return `<div class="formula">${rows.map(([id, number, label, finished]) => {
+    const quizBit = id === "quiz" && done.quizPercent !== undefined ? ` · ${done.quizPercent}%` : "";
+    return `<button type="button" class="formula-row${finished ? " done" : ""}" data-act="loop-step" data-step="${id}" data-chapter="${chapter}"><span class="step-no">${number}</span> ${esc(label)}${esc(quizBit)}</button>`;
+  }).join("")}</div>`;
 }
 
 function beginChapterQuiz() {
@@ -1093,19 +1147,139 @@ function viewGrid() {
     </section>`;
 }
 
+function mathCount() {
+  return bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).length;
+}
+
+function mathSheet(fromQuestion) {
+  const count = mathCount();
+  return `
+    <div class="math-layout" id="math-sheet">
+      <section class="card math-lead">
+        <p class="kicker">Waterbury · Math Pass</p>
+        <h2>Numbers, then the reason</h2>
+        <p class="lede">${count} drills from chapters you've completed. The cards below use the same methods as those drills. Change a number and the readout updates on this page.</p>
+        <div class="stack">
+          <button class="btn btn-primary" data-act="math-start" ${count ? "" : "disabled"}>Work three math items</button>
+          ${fromQuestion ? `<button class="btn btn-quiet" data-act="calc-close">Back to the question</button>` : ""}
+        </div>
+        <p class="muted">Day-count and who owns closing day are written into each proration, so you are practicing a stated method. Conveyance uses Conn. Gen. Stat. § 12-494 and the base municipal rate, with no extra local tax.</p>
+      </section>
+      <section class="card tool">
+        <h3>Commission</h3>
+        <label>Sale price
+          <input type="number" inputmode="decimal" min="0" step="1" data-field="commission-price" value="325000">
+        </label>
+        <label>Commission rate (%)
+          <input type="number" inputmode="decimal" min="0" step="0.1" data-field="commission-rate" value="5">
+        </label>
+        <p class="tool-readout" data-out="commission" aria-live="polite"></p>
+        <p class="fine">Total commission = sale price × rate.</p>
+      </section>
+      <section class="card tool">
+        <h3>Connecticut conveyance</h3>
+        <label>Residential sale price
+          <input type="number" inputmode="decimal" min="0" step="1" data-field="conv-price" value="250000">
+        </label>
+        <p class="tool-readout" data-out="conv" aria-live="polite"></p>
+        <p class="fine">State tax is 0.75% up to $800,000, 1.25% from there to $2,500,000, and 2.25% above that. Municipal tax is 0.25% when the town has not added a local tax. Under $2,000, no tax.</p>
+      </section>
+      <section class="card tool">
+        <h3>Prepaid tax proration</h3>
+        <label>Annual tax
+          <input type="number" inputmode="decimal" min="0" step="1" data-field="tax-annual" value="3600">
+        </label>
+        <label>Seller's days, including closing day
+          <input type="number" inputmode="numeric" min="0" max="360" step="1" data-field="tax-seller-days" value="75">
+        </label>
+        <p class="tool-readout" data-out="proration" aria-live="polite"></p>
+        <p class="fine">360-day year. Daily tax = annual tax ÷ 360. The buyer reimburses the seller for the buyer's days.</p>
+      </section>
+      <section class="card tool">
+        <h3>Property tax mills</h3>
+        <label>Assessed value
+          <input type="number" inputmode="decimal" min="0" step="1" data-field="mill-assessed" value="140000">
+        </label>
+        <label>Mills
+          <input type="number" inputmode="decimal" min="0" step="0.1" data-field="mill-rate" value="20">
+        </label>
+        <p class="tool-readout" data-out="mills" aria-live="polite"></p>
+        <p class="fine">One mill is $1 of tax per $1,000 of assessed value.</p>
+      </section>
+      <section class="card tool">
+        <h3>Income approach</h3>
+        <label>Net operating income
+          <input type="number" inputmode="decimal" min="0" step="1" data-field="cap-noi" value="24000">
+        </label>
+        <label>Cap rate (%)
+          <input type="number" inputmode="decimal" min="0" step="0.1" data-field="cap-rate" value="8">
+        </label>
+        <p class="tool-readout" data-out="cap" aria-live="polite"></p>
+        <p class="fine">Value = NOI ÷ cap rate. Mortgage payments stay out of NOI.</p>
+      </section>
+      <section class="card calc-card">
+        <h3>Keypad</h3>
+        <div class="calc" id="calc">
+          <div class="readout" aria-live="polite">${esc(calcValue)}</div>
+          ${["7", "8", "9", "÷", "4", "5", "6", "×", "1", "2", "3", "−", "0", ".", "C", "+"].map((key) =>
+            `<button type="button" data-key="${esc(key)}">${esc(key)}</button>`).join("")}
+          <button type="button" data-key="=" style="grid-column: span 4">Equals</button>
+        </div>
+      </section>
+    </div>`;
+}
+
+function fieldNum(sheet, name) {
+  const raw = sheet.querySelector(`[data-field="${name}"]`)?.value;
+  if (raw === "" || raw == null) return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function setOut(sheet, name, text) {
+  const node = sheet.querySelector(`[data-out="${name}"]`);
+  if (node) node.textContent = text;
+}
+
+function paintMathTools() {
+  const sheet = main.querySelector("#math-sheet");
+  if (!sheet) return;
+  const price = fieldNum(sheet, "commission-price");
+  const rate = fieldNum(sheet, "commission-rate");
+  setOut(sheet, "commission", price == null || rate == null
+    ? "Enter a sale price and a rate."
+    : `Commission ${formatMoney(commissionAmount(price, rate))}`);
+  const sale = fieldNum(sheet, "conv-price");
+  if (sale == null) setOut(sheet, "conv", "Enter a sale price.");
+  else {
+    const tax = residentialConveyance(sale);
+    setOut(sheet, "conv", tax.applies
+      ? `State ${formatMoney(tax.state)} · Municipal ${formatMoney(tax.municipal)} · Total ${formatMoney(tax.total)}`
+      : "No conveyance tax. The tax applies when consideration is at least $2,000.");
+  }
+  const annual = fieldNum(sheet, "tax-annual");
+  const sellerDays = fieldNum(sheet, "tax-seller-days");
+  const credit = annual == null || sellerDays == null ? null : buyerTaxCredit(annual, sellerDays);
+  setOut(sheet, "proration", credit
+    ? `Daily ${formatMoney(credit.daily)} · Buyer days ${credit.buyerDays} · Buyer reimburses ${formatMoney(credit.credit)}`
+    : "Use an annual tax and seller days from 0 through 360.");
+  const assessed = fieldNum(sheet, "mill-assessed");
+  const mills = fieldNum(sheet, "mill-rate");
+  setOut(sheet, "mills", assessed == null || mills == null
+    ? "Enter assessed value and mills."
+    : `Annual tax ${formatMoney(millTax(assessed, mills))}`);
+  const noi = fieldNum(sheet, "cap-noi");
+  const cap = fieldNum(sheet, "cap-rate");
+  const value = noi == null || cap == null ? null : incomeValue(noi, cap);
+  setOut(sheet, "cap", value == null
+    ? "Enter NOI and a cap rate above 0."
+    : `Indicated value ${formatMoney(value)}`);
+}
+
 function viewCalc() {
   window.clearInterval(timerHandle);
-  main.innerHTML = `
-    <section class="card">
-      <h2>Calculator</h2>
-      <div class="calc" id="calc">
-        <div class="readout" aria-live="polite">${esc(calcValue)}</div>
-        ${["7", "8", "9", "÷", "4", "5", "6", "×", "1", "2", "3", "−", "0", ".", "C", "+"].map((key) =>
-          `<button type="button" data-key="${esc(key)}">${esc(key)}</button>`).join("")}
-        <button type="button" data-key="=" style="grid-column: span 4">Equals</button>
-      </div>
-      <button class="btn btn-quiet" style="margin-top:12px" data-act="calc-close">Close</button>
-    </section>`;
+  main.innerHTML = mathSheet(true);
+  paintMathTools();
 }
 
 let calcReturn = "home";
@@ -1689,6 +1863,8 @@ function onClick(event) {
     go("loop");
   } else if (act === "study-chapter") {
     startChapterStudy(Number(button.dataset.chapter));
+  } else if (act === "loop-step") {
+    openLoopStep(Number(button.dataset.chapter), button.dataset.step);
   } else if (act === "loop-continue") {
     continueLoop();
   } else if (act === "quiz-next") {
@@ -2159,6 +2335,7 @@ main.addEventListener("submit", (event) => {
 });
 main.addEventListener("input", (event) => {
   if (event.target?.id === "buddy-q") buddyDraft = event.target.value;
+  if (event.target?.closest("#math-sheet")) paintMathTools();
 });
 document.addEventListener("keydown", onKey);
 document.addEventListener("visibilitychange", () => {

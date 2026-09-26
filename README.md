@@ -79,9 +79,13 @@ Figures that could not be pinned to a stable official text were left out. That i
 
 Third-party code used to publish the site is listed in [`LICENSES/credits`](LICENSES/credits). The study text, crossword, and art in this repository are original. The deploy workflow calls MIT-licensed GitHub Actions (`actions/checkout`, `actions/configure-pages`, `actions/upload-pages-artifact`, and `actions/deploy-pages`). No copyrighted game art or textbook content is included.
 
+Layout patterns come from the owner's other public repositories. Those sites were not copied. See the credits file for which pattern came from which repo.
+
 ## Deploy
 
-Pushes to `main` run `.github/workflows/pages.yml`. The site uses relative paths so it can live at a project URL. The intended address is `https://asteroidsravens.github.io/ct-license-trail/`.
+Pushes to `main` run `.github/workflows/pages.yml`, the same Actions shape as [the-immortal-case](https://github.com/asteroidsravens/the-immortal-case): checkout, configure Pages with no enablement flag, upload the site root, deploy. A newer push cancels an in-progress deploy. `.nojekyll` is included the way [asteroidsravens.github.io](https://github.com/asteroidsravens/asteroidsravens.github.io) does, so a branch publish will not run Jekyll on this tree.
+
+The site uses relative paths so it can live at a project URL, the same kind of address as [the-slow-boil](https://asteroidsravens.github.io/the-slow-boil/). The intended address is `https://asteroidsravens.github.io/ct-license-trail/`. The user-site root, `https://asteroidsravens.github.io/`, stays the existing site. This app does not replace that index.
 
 The repository is meant to stay private. GitHub Pages on a private repository needs a paid plan (GitHub Pro, Team, or Enterprise). An admin has to set **Settings → Pages → Build and deployment → Source: GitHub Actions** once. The workflow cannot create that site on its own. Do not switch the repository back to public if Pages then fails for billing.
 

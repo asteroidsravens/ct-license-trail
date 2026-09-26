@@ -8,6 +8,7 @@ import {
   portionOf, portionReadiness, chapterStudyPlan, hydratePortions, EXAM_SHAPE,
   cleanDogName, companion, companionCheer, DEFAULT_DOG_NAME, liveStreak,
   searchBuddy, tutorUrl, spokenLetters, trailBuddyLines,
+  formatMoney, commissionAmount, residentialConveyance, buyerTaxCredit, millTax, incomeValue,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -335,5 +336,26 @@ assert.match(appSource, /study helper, not a counselor/);
 assert.match(appSource, /Hands-free tips/);
 assert.match(appSource, /Talk to my tutor/);
 assert.match(appSource, /speechSynthesis/);
+assert.match(appSource, /class="stepnav"/);
+assert.match(appSource, /data-field="commission-price"/);
+
+assert.equal(formatMoney(16250), "$16,250");
+assert.equal(formatMoney(10.5), "$10.50");
+assert.equal(commissionAmount(325000, 5), 16250);
+assert.deepEqual(residentialConveyance(1500), { state: 0, municipal: 0, total: 0, applies: false });
+assert.deepEqual(residentialConveyance(250000), { state: 1875, municipal: 625, total: 2500, applies: true });
+assert.deepEqual(residentialConveyance(900000), { state: 7250, municipal: 2250, total: 9500, applies: true });
+assert.deepEqual(residentialConveyance(2600000), { state: 29500, municipal: 6500, total: 36000, applies: true });
+assert.deepEqual(buyerTaxCredit(3600, 75), { daily: 10, buyerDays: 285, credit: 2850 });
+assert.equal(buyerTaxCredit(3600, 361), null);
+assert.equal(millTax(140000, 20), 2800);
+assert.equal(millTax(150000, 25), 3750);
+assert.equal(incomeValue(24000, 8), 300000);
+assert.equal(incomeValue(24000, 0), null);
+
+const pagesYml = readFileSync(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8");
+assert.equal(pagesYml.includes("enablement"), false);
+assert.match(pagesYml, /cancel-in-progress:\s*true/);
+assert.equal(readFileSync(new URL("../.nojekyll", import.meta.url), "utf8"), "");
 
 console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${chapterNumbers.length} chapters`);
