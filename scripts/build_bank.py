@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from qutil import item, src, cgs, CH223
 from course_units import classify_question
 from bank_ct import ct_questions
+from bank_ct_chapters import ct_chapter_questions
 from bank_national import national_questions
 from bank_national_b import more_national
 
@@ -848,10 +849,10 @@ def finalize(raw):
         rng.shuffle(choices)
         answer = choices.index(raw_q["correct"])
         qid = f"{raw_q['topic']}-{index:04d}"
-        questions.append({
+        row = {
             "id": qid,
             "topic": raw_q["topic"],
-            "chapter": classify_question(raw_q["topic"], stem, raw_q["explanation"]),
+            "chapter": raw_q.get("chapter") or classify_question(raw_q["topic"], stem, raw_q["explanation"]),
             "pools": raw_q["pools"],
             "stem": stem,
             "choices": choices,
@@ -861,7 +862,12 @@ def finalize(raw):
             "math": raw_q["math"],
             "event": raw_q["event"],
             "source": raw_q["source"],
-        })
+        }
+        if raw_q.get("ct_law"):
+            row["ctLaw"] = True
+        if raw_q.get("flavor"):
+            row["flavor"] = raw_q["flavor"]
+        questions.append(row)
     return questions
 
 
@@ -870,6 +876,7 @@ def main():
     raw.extend(national_questions())
     raw.extend(more_national())
     raw.extend(ct_questions())
+    raw.extend(ct_chapter_questions())
     raw.extend(math_questions())
     questions = finalize(raw)
 

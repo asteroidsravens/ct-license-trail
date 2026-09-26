@@ -4,6 +4,7 @@ import {
   createState, levelInfo, daysUntil, todayKey, previousDay, masteryPercent,
   answerQuestion, dueReviews, sampleExam, scoreExam, recordExam, roadTopics,
   puzzleForDate, awardCrossword, completedChapters, pickQuestions,
+  displayStem, ctLawEventsForStop, themeId,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -108,6 +109,26 @@ for (const item of questions) {
   assert.equal(item.unit, undefined, `${item.id} unit`);
   assert.ok(chapterNumbers.includes(item.chapter), `${item.id} chapter`);
 }
+const ctLayer = questions.filter((q) => q.ctLaw);
+assert.ok(ctLayer.length >= 30, `ct law layer ${ctLayer.length}`);
+const eventChapters = new Set(ctLayer.filter((q) => q.event).map((q) => q.chapter));
+for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21]) {
+  assert.ok(eventChapters.has(n), `missing CT law event for chapter ${n}`);
+}
+for (const q of ctLayer) {
+  assert.ok(q.source && q.source.url && q.source.label, q.id);
+  assert.ok(q.flavor.outdoors && q.flavor.adventure && q.flavor.history, q.id);
+  assert.equal(q.flavor.classic, undefined, q.id);
+  assert.equal(displayStem(q, "classic"), q.stem);
+  const outdoors = displayStem(q, "outdoors");
+  assert.equal(outdoors, `${q.flavor.outdoors} ${q.stem}`);
+  assert.equal(outdoors.includes(q.choices[q.answer]), false);
+}
+assert.equal(themeId(createState()), "classic");
+const ownershipEvents = ctLawEventsForStop(questions, "ownership", [3, 4, 5], []);
+assert.ok(ownershipEvents.some((q) => q.chapter === 3 && q.ctLaw && q.event));
+assert.equal(ctLawEventsForStop(questions, "ownership", [2], []).length, 0);
+
 const starter = course.defaultCompleted;
 const towns = roadTopics(bank.topics, questions, starter);
 assert.ok(towns.length > 0);

@@ -28,7 +28,7 @@ def rcsa(section):
     return src(f"Regs. Conn. State Agencies § {section}", REGS)
 
 
-def item(topic, stem, correct, wrongs, explanation, source=None, math=False, steps=None, event=False, pools=None):
+def item(topic, stem, correct, wrongs, explanation, source=None, math=False, steps=None, event=False, pools=None, chapter=None, ct_law=False, flavor=None):
     if len(wrongs) != 3:
         raise ValueError(f"Need 3 wrong answers: {stem[:90]}")
     choices = [correct, *wrongs]
@@ -47,4 +47,7 @@ def item(topic, stem, correct, wrongs, explanation, source=None, math=False, ste
         "steps": steps,
         "event": event,
         "pools": pools or [topic],
+        "chapter": chapter,
+        "ct_law": ct_law,
+        "flavor": flavor,
     }

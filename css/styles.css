@@ -163,6 +163,19 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 8px; }
 .choice.bad { background: var(--bad-bg); border-color: var(--bad); }
 .choice:disabled { cursor: default; }
 
+.badge-ct {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--pine);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+}
 .kicker {
   margin: 0 0 6px;
   color: var(--accent);
