@@ -52,7 +52,8 @@ export function createState() {
     session: null,
     introSeen: false,
     lastScreen: "home",
-    courseUnit: null,
+    completedChapters: null,
+    mockAllChapters: false,
     crossword: {
       streak: { count: 0, lastDay: null },
       solved: {},
@@ -63,29 +64,57 @@ export function createState() {
 
 const WEEKDAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-export function courseUnitId(state, units) {
-  const ids = (units || []).map((unit) => unit.id);
-  if (ids.includes(state?.courseUnit)) return state.courseUnit;
-  return ids[0] || null;
+export const FALLBACK_COMPLETED = [2, 3, 6, 7, 14, 15, 16, 17, 20];
+
+export function completedChapters(state, course) {
+  const known = new Set((course?.chapters || []).map((row) => row.n));
+  const fallback = (course?.defaultCompleted || FALLBACK_COMPLETED).filter((n) => !known.size || known.has(n));
+  if (!Array.isArray(state?.completedChapters)) return [...fallback];
+  return state.completedChapters
+    .map((n) => Number(n))
+    .filter((n) => !known.size || known.has(n))
+    .sort((a, b) => a - b);
 }
 
-export function puzzleForDate(pack, date = new Date(), unitId) {
+function puzzleChapters(puzzle) {
+  const used = new Set();
+  [...(puzzle.across || []), ...(puzzle.down || [])].forEach((entry) => {
+    if (entry.chapter) used.add(entry.chapter);
+  });
+  return [...used].sort((a, b) => a - b);
+}
+
+export function puzzleForDate(pack, date = new Date(), checked) {
   const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const epoch = Date.UTC(2024, 0, 1);
   const days = Math.floor((utc - epoch) / 86400000);
   const week = Math.floor(days / 7);
   const weekday = WEEKDAY_NAMES[date.getDay()];
-  let resolved = unitId || null;
-  let pool;
-  if (pack.ranges) {
-    const order = pack.unitOrder || Object.keys(pack.ranges);
-    if (!resolved || !pack.ranges[resolved]) resolved = order.find((id) => pack.ranges[id]) || order[0];
-    pool = pack.ranges[resolved].days[weekday];
-  } else {
-    pool = pack.days[weekday];
-  }
+  const wanted = Array.isArray(checked) ? [...checked] : [...(pack.defaultCompleted || FALLBACK_COMPLETED)];
+  const allowed = new Set(wanted);
+  if (!allowed.size) return null;
+  const eligible = [];
+  Object.values(pack.packs || {}).forEach((row) => {
+    (row.days?.[weekday] || []).forEach((puzzle) => {
+      const chapters = puzzleChapters(puzzle);
+      if (!chapters.length) return;
+      if (chapters.every((n) => allowed.has(n))) eligible.push({ puzzle, chapters });
+    });
+  });
+  if (!eligible.length) return null;
+  eligible.sort((a, b) => b.chapters.length - a.chapters.length || a.puzzle.id.localeCompare(b.puzzle.id));
+  const top = eligible[0].chapters.length;
+  const near = eligible.filter((item) => item.chapters.length >= top - 1);
+  const pool = near.length >= 4 ? near : eligible.slice(0, Math.min(8, eligible.length));
   const index = ((week % pool.length) + pool.length) % pool.length;
-  return { puzzle: pool[index], weekday, dateKey: todayKey(date), index, unitId: resolved };
+  const chosen = pool[index];
+  return {
+    puzzle: chosen.puzzle,
+    weekday,
+    dateKey: todayKey(date),
+    index,
+    chapters: chosen.chapters,
+  };
 }
 
 export function awardCrossword(state, day, clean, puzzleId) {
@@ -262,8 +291,9 @@ export function dueReviews(state, now = Date.now()) {
     .map(([id]) => id);
 }
 
-export function pickQuestions(questions, topicId, count, state, rng = Math.random) {
-  const pool = questions.filter((q) => q.topic === topicId);
+export function pickQuestions(questions, topicId, count, state, rng = Math.random, chapters = null) {
+  const allowed = chapters ? new Set(chapters) : null;
+  const pool = questions.filter((q) => q.topic === topicId && (!allowed || allowed.has(q.chapter)));
   const unseen = pool.filter((q) => !state.topics[topicId] || !state.review[q.id]);
   const missed = pool.filter((q) => state.review[q.id] && state.review[q.id].lapses > 0 && state.review[q.id].reps === 0);
   const ranked = [...missed, ...unseen.filter((q) => !missed.includes(q)), ...pool];
@@ -294,11 +324,13 @@ function shuffleIds(ids, rng) {
   return copy;
 }
 
-export function sampleExam(questions, topics, mode, rng = Math.random) {
+export function sampleExam(questions, topics, mode, rng = Math.random, chapters = null) {
   const used = new Set();
+  const allowed = chapters ? new Set(chapters) : null;
+  const source = allowed ? questions.filter((q) => allowed.has(q.chapter)) : questions;
   const sections = [];
   const take = (topicId, count) => {
-    const pool = questions.filter((q) => q.pools.includes(topicId) && !used.has(q.id));
+    const pool = source.filter((q) => q.pools.includes(topicId) && !used.has(q.id));
     const copy = [...pool];
     for (let i = copy.length - 1; i > 0; i -= 1) {
       const j = Math.floor(rng() * (i + 1));
@@ -320,8 +352,19 @@ export function sampleExam(questions, topics, mode, rng = Math.random) {
     sections.push({ id: "state", label: "Connecticut portion", minutes: 45, ids: shuffleIds(ids, rng) });
   }
   const ids = sections.flatMap((section) => section.ids);
-  const minutes = mode === "both" ? 165 : sections[0].minutes;
-  return { ids, sections, minutes, limitMs: minutes * 60 * 1000 };
+  const bulletinCount = mode === "both" ? 115 : mode === "state" ? 35 : 80;
+  const bulletinMinutes = mode === "both" ? 165 : mode === "state" ? 45 : 120;
+  const minutes = chapters && ids.length < bulletinCount
+    ? Math.max(5, Math.round(bulletinMinutes * ids.length / bulletinCount))
+    : bulletinMinutes;
+  return {
+    ids,
+    sections,
+    minutes,
+    limitMs: minutes * 60 * 1000,
+    everyChapter: !chapters,
+    bulletinCount,
+  };
 }
 
 export function scoreExam(ids, answers, questionsById) {
@@ -359,6 +402,9 @@ export function recordExam(state, ids, answers, questionsById, now = Date.now(),
   return { state: next, result };
 }
 
-export function roadTopics(topics) {
-  return topics.filter((topic) => topic.id !== "math");
+export function roadTopics(topics, questions = null, chapters = null) {
+  const base = topics.filter((topic) => topic.id !== "math");
+  if (!questions || !chapters) return base;
+  const allowed = new Set(chapters);
+  return base.filter((topic) => questions.some((q) => q.topic === topic.id && allowed.has(q.chapter)));
 }

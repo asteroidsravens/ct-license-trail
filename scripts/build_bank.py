@@ -851,7 +851,7 @@ def finalize(raw):
         questions.append({
             "id": qid,
             "topic": raw_q["topic"],
-            "unit": classify_question(raw_q["topic"], stem, raw_q["explanation"]),
+            "chapter": classify_question(raw_q["topic"], stem, raw_q["explanation"]),
             "pools": raw_q["pools"],
             "stem": stem,
             "choices": choices,

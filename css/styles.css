@@ -289,6 +289,29 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 8px; }
   font-size: 1.4rem;
 }
 label.field { display: block; font-weight: 700; margin-bottom: 6px; }
+.checkline {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  background: #fff;
+}
+.checkline .box {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  flex: none;
+  border-radius: 6px;
+  border: 2px solid var(--pine);
+  background: #fff;
+}
+.checkline[aria-pressed="true"] .box { background: var(--pine); }
+.chapter-list { gap: 8px; }
 input[type="date"], input[type="text"], select {
   width: 100%;
   min-height: var(--tap);
