@@ -213,6 +213,12 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 8px; }
 .bubble.buddy { background: #fff; border: 1px solid var(--line); }
 .bubble .btn { margin-top: 10px; }
 .tutor-link { margin-top: 10px; }
+.tutor-dash { margin: 12px 0 0; }
+.tutor-dash .btn { width: auto; min-height: 44px; display: inline-flex; padding: 8px 14px; }
+.buddy-note { margin: 0 0 12px; }
+.trail-lead { font-weight: 700; margin: 0 0 8px; }
+.trail-nudge { margin: 8px 0 0; }
+.buddy-card .btn-pine { margin-top: 12px; }
 .tile-talk p { margin: 0 0 8px; }
 .xw-mic { margin-top: 8px; }
 
