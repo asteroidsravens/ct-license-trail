@@ -50,6 +50,11 @@ export function createState() {
     settings: { sound: false, theme: "classic" },
     mock: null,
     session: null,
+    portions: {
+      national: { seen: 0, correct: 0 },
+      state: { seen: 0, correct: 0 },
+    },
+    chapterLoops: {},
     introSeen: false,
     lastScreen: "home",
     completedChapters: null,
@@ -229,6 +234,107 @@ export function masteryPercent(state, topicId) {
   return Math.round((row.correct / row.seen) * 100);
 }
 
+export const EXAM_SHAPE = {
+  nationalCount: 80,
+  nationalMinutes: 120,
+  stateCount: 35,
+  stateMinutes: 45,
+  bothMinutes: 165,
+  passingPercent: 70,
+  bulletin: "PSI Connecticut Real Estate Candidate Information Bulletin, updated November 13, 2025",
+};
+
+export function portionOf(question) {
+  if (question?.ctLaw || String(question?.topic || "").startsWith("ct-")) return "state";
+  return "national";
+}
+
+function emptyPortions() {
+  return {
+    national: { seen: 0, correct: 0 },
+    state: { seen: 0, correct: 0 },
+  };
+}
+
+function bumpPortion(state, question, correct) {
+  if (!state.portions) state.portions = emptyPortions();
+  const key = portionOf(question);
+  const row = state.portions[key] || { seen: 0, correct: 0 };
+  row.seen += 1;
+  if (correct) row.correct += 1;
+  state.portions[key] = row;
+}
+
+export function hydratePortions(state, questions) {
+  if (!state.portions) state.portions = emptyPortions();
+  if (state.portions.hydrated) return state;
+  const byId = Object.fromEntries((questions || []).map((q) => [q.id, q]));
+  const tally = emptyPortions();
+  let any = false;
+  Object.entries(state.review || {}).forEach(([id, row]) => {
+    const question = byId[id];
+    if (!question || !row) return;
+    const seen = (row.reps || 0) + (row.lapses || 0);
+    if (!seen) return;
+    any = true;
+    const key = portionOf(question);
+    tally[key].seen += seen;
+    tally[key].correct += row.reps || 0;
+  });
+  if (any && !state.portions.national.seen && !state.portions.state.seen) {
+    state.portions.national = tally.national;
+    state.portions.state = tally.state;
+  }
+  state.portions.hydrated = true;
+  return state;
+}
+
+export function portionReadiness(state) {
+  const portions = state.portions || emptyPortions();
+  const shape = [
+    ["national", "General principles", EXAM_SHAPE.nationalCount, EXAM_SHAPE.nationalMinutes],
+    ["state", "Connecticut law", EXAM_SHAPE.stateCount, EXAM_SHAPE.stateMinutes],
+  ];
+  return shape.map(([id, label, count, minutes]) => {
+    const stats = portions[id] || { seen: 0, correct: 0 };
+    const percent = stats.seen ? Math.round((stats.correct / stats.seen) * 100) : 0;
+    let status = "Not started";
+    if (stats.seen > 0 && stats.seen < 10) status = "Early";
+    else if (stats.seen >= 10 && percent >= EXAM_SHAPE.passingPercent) status = "On pace";
+    else if (stats.seen >= 10) status = "Below the line";
+    return { id, label, seen: stats.seen, correct: stats.correct, percent, status, count, minutes };
+  });
+}
+
+function shuffled(list, rng) {
+  const copy = [...list];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export function chapterStudyPlan(questions, chapter, rng = Math.random) {
+  const pool = (questions || []).filter((q) => q.chapter === chapter);
+  const principles = shuffled(pool.filter((q) => portionOf(q) === "national"), rng);
+  const ct = shuffled(pool.filter((q) => portionOf(q) === "state"), rng);
+  const principleIds = principles.slice(0, 4).map((q) => q.id);
+  const ctIds = ct.slice(0, 4).map((q) => q.id);
+  const used = new Set([...principleIds, ...ctIds]);
+  let rest = shuffled(pool.filter((q) => !used.has(q.id)), rng);
+  if (rest.length < Math.min(4, pool.length)) rest = shuffled(pool, rng);
+  const quizCt = rest.filter((q) => portionOf(q) === "state").slice(0, 2);
+  const quizNat = rest.filter((q) => portionOf(q) === "national").slice(0, 4);
+  let quiz = shuffled([...quizNat, ...quizCt], rng).slice(0, 6);
+  if (quiz.length < Math.min(4, pool.length)) quiz = shuffled(pool, rng).slice(0, Math.min(6, pool.length));
+  return {
+    principles: principleIds,
+    ct: ctIds,
+    quiz: quiz.map((q) => q.id),
+  };
+}
+
 function touchStreak(state, day) {
   if (state.streak.lastDay === day) return;
   if (state.streak.lastDay === previousDay(day)) state.streak.count += 1;
@@ -284,6 +390,7 @@ export function answerQuestion(state, question, choiceIndex, now = Date.now(), d
   row.seen += 1;
   if (correct) row.correct += 1;
   next.topics[question.topic] = row;
+  bumpPortion(next, question, correct);
 
   const xpGain = correct ? 10 + Math.min(next.answerStreak, 5) * 2 : 3;
   next.xp += xpGain;
@@ -375,7 +482,7 @@ export function sampleExam(questions, topics, mode, rng = Math.random, chapters 
   if (mode === "national" || mode === "both") {
     const ids = [];
     want("national").forEach((topic) => ids.push(...take(topic.id, topic.weight)));
-    sections.push({ id: "national", label: "National portion", minutes: 120, ids: shuffleIds(ids, rng) });
+    sections.push({ id: "national", label: "General portion", minutes: 120, ids: shuffleIds(ids, rng) });
   }
   if (mode === "state" || mode === "both") {
     const ids = [];
@@ -398,29 +505,56 @@ export function sampleExam(questions, topics, mode, rng = Math.random, chapters 
   };
 }
 
-export function scoreExam(ids, answers, questionsById) {
+function scoreIds(ids, answers, questionsById) {
   let correct = 0;
   const byTopic = {};
-  ids.forEach((id) => {
+  (ids || []).forEach((id) => {
     const q = questionsById[id];
+    if (!q) return;
     const ok = answers[id] === q.answer;
     if (ok) correct += 1;
     if (!byTopic[q.topic]) byTopic[q.topic] = { correct: 0, total: 0 };
     byTopic[q.topic].total += 1;
     if (ok) byTopic[q.topic].correct += 1;
   });
-  const total = ids.length;
+  const total = (ids || []).length;
   const percent = total ? Math.round((correct / total) * 100) : 0;
-  return { correct, total, percent, passed: percent >= 70, byTopic };
+  return {
+    correct,
+    total,
+    percent,
+    passed: total > 0 && percent >= EXAM_SHAPE.passingPercent,
+    byTopic,
+  };
 }
 
-export function recordExam(state, ids, answers, questionsById, now = Date.now(), day = todayKey()) {
+export function scoreExam(ids, answers, questionsById, sections = null) {
+  const overall = scoreIds(ids, answers, questionsById);
+  const portions = (sections || [])
+    .filter((section) => section.ids?.length)
+    .map((section) => {
+      const scored = scoreIds(section.ids, answers, questionsById);
+      return {
+        id: section.id,
+        label: section.label,
+        correct: scored.correct,
+        total: scored.total,
+        percent: scored.percent,
+        passed: scored.passed,
+      };
+    });
+  const passed = portions.length ? portions.every((section) => section.passed) : overall.passed;
+  return { ...overall, passed, portions };
+}
+
+export function recordExam(state, ids, answers, questionsById, now = Date.now(), day = todayKey(), sections = null) {
   const next = structuredClone(state);
   touchStreak(next, day);
-  const result = scoreExam(ids, answers, questionsById);
+  const result = scoreExam(ids, answers, questionsById, sections);
   ids.forEach((id) => {
     const q = questionsById[id];
     const ok = answers[id] === q.answer;
+    bumpPortion(next, q, ok);
     const row = topicStats(next, q.topic);
     row.seen += 1;
     if (ok) row.correct += 1;

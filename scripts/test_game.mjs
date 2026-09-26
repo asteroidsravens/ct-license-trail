@@ -5,6 +5,7 @@ import {
   answerQuestion, dueReviews, sampleExam, scoreExam, recordExam, roadTopics,
   puzzleForDate, awardCrossword, completedChapters, pickQuestions,
   displayStem, ctLawEventsForStop, themeId,
+  portionOf, portionReadiness, chapterStudyPlan, hydratePortions, EXAM_SHAPE,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -90,9 +91,19 @@ assert.equal(recorded.result.percent >= 70, recorded.result.passed);
 assert.equal(recorded.state.streak.count, 1);
 assert.ok(dueReviews(recorded.state, 1_700_000_000_000).length > 0);
 
-const scored = scoreExam(both.ids, Object.fromEntries(both.ids.map((id) => [id, byId[id].answer])), byId);
+const scored = scoreExam(both.ids, Object.fromEntries(both.ids.map((id) => [id, byId[id].answer])), byId, both.sections);
 assert.equal(scored.percent, 100);
 assert.equal(scored.passed, true);
+assert.equal(scored.portions.length, 2);
+assert.ok(scored.portions.every((row) => row.passed));
+const splitAnswers = Object.fromEntries(both.ids.map((id) => [id, byId[id].answer]));
+both.sections.find((section) => section.id === "state").ids.forEach((id) => {
+  splitAnswers[id] = (byId[id].answer + 1) % 4;
+});
+const split = scoreExam(both.ids, splitAnswers, byId, both.sections);
+assert.equal(split.portions.find((row) => row.id === "national").passed, true);
+assert.equal(split.portions.find((row) => row.id === "state").passed, false);
+assert.equal(split.passed, false);
 
 const course = JSON.parse(readFileSync(new URL("../data/course.json", import.meta.url), "utf8"));
 const pack = JSON.parse(readFileSync(new URL("../data/crosswords.json", import.meta.url), "utf8"));
@@ -255,5 +266,29 @@ const nextDay = awardCrossword(clean.state, "2026-09-27", true, "tuesday-1");
 assert.equal(nextDay.state.crossword.streak.count, 2);
 const skipped = awardCrossword(clean.state, "2026-09-28", true, "wednesday-1");
 assert.equal(skipped.state.crossword.streak.count, 1);
+
+const ctQuestion = questions.find((q) => q.ctLaw);
+const nationalQuestion = questions.find((q) => q.topic === "contracts" && !q.ctLaw);
+assert.equal(portionOf(ctQuestion), "state");
+assert.equal(portionOf(nationalQuestion), "national");
+let pace = createState();
+pace = answerQuestion(pace, nationalQuestion, nationalQuestion.answer).state;
+pace = answerQuestion(pace, ctQuestion, (ctQuestion.answer + 1) % 4).state;
+const ready = portionReadiness(pace);
+assert.equal(ready.find((row) => row.id === "national").correct, 1);
+assert.equal(ready.find((row) => row.id === "state").correct, 0);
+assert.equal(ready.find((row) => row.id === "state").seen, 1);
+assert.equal(ready.find((row) => row.id === "national").status, "Early");
+const plan3 = chapterStudyPlan(questions, 3, () => 0.2);
+assert.ok(plan3.principles.length > 0);
+assert.ok(plan3.ct.length > 0);
+assert.ok(plan3.quiz.length > 0);
+assert.ok(plan3.ct.every((id) => portionOf(byId[id]) === "state"));
+assert.ok(plan3.principles.every((id) => portionOf(byId[id]) === "national"));
+const plan2 = chapterStudyPlan(questions, 2, () => 0.2);
+assert.equal(plan2.ct.length, 0);
+assert.ok(plan2.principles.length > 0);
+const seeded = hydratePortions(createState(), questions);
+assert.equal(portionReadiness(seeded)[0].seen, 0);
 
 console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${chapterNumbers.length} chapters`);
