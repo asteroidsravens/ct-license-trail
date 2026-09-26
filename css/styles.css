@@ -576,6 +576,98 @@ footer.fine {
 .xw-all h3 { margin: 8px 0 4px; font-size: 1rem; }
 .xw-list { margin: 0; padding-left: 1.2rem; }
 .xw-list li { margin: 2px 0; }
+
+.stepnav {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: rgba(22, 56, 44, 0.96);
+  margin: -14px -14px 12px;
+  border-bottom: 1px solid rgba(244, 239, 230, 0.18);
+}
+.stepnav .nav-inner {
+  display: flex;
+  max-width: 760px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+.stepnav button {
+  flex: 1 0 auto;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: #d9e4dc;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 10px;
+  min-height: 44px;
+}
+.stepnav button.active {
+  color: #fffaf3;
+  border-bottom-color: var(--amber);
+}
+.stepnav button.done { color: #b7d7c6; }
+.chapter-walk h3 { font-size: 1.05rem; margin: 16px 0 8px; }
+.formula { display: flex; flex-direction: column; gap: 8px; }
+.formula-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.formula-row.done {
+  background: rgba(15, 92, 62, 0.1);
+  border-color: rgba(15, 92, 62, 0.35);
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.step-no { font-weight: 800; letter-spacing: 0.06em; }
+.math-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.math-layout .card { margin-bottom: 0; }
+.tool h3, .calc-card h3 {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.tool label { display: block; font-weight: 700; margin: 0 0 10px; }
+.tool input[type="number"] {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  min-height: 44px;
+}
+.tool input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+.tool-readout {
+  background: var(--pine);
+  color: #fffaf3;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 4px 0 8px;
+  font-weight: 700;
+}
 @media (min-width: 880px) {
   :root { --tab: 0px; }
   .shell { max-width: 1080px; }
@@ -664,6 +756,13 @@ footer.fine {
     margin-left: 0;
     padding-left: 0;
   }
+  .math-layout {
+    max-width: 1020px;
+    margin: 0 auto;
+    grid-template-columns: 1fr 1fr;
+  }
+  .math-layout .math-lead,
+  .math-layout .calc-card { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }

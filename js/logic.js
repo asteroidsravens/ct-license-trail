@@ -620,6 +620,71 @@ export function roadTopics(topics, questions = null, chapters = null) {
   return base.filter((topic) => questions.some((q) => q.topic === topic.id && allowed.has(q.chapter)));
 }
 
+export function roundMoney(n) {
+  const value = Number(n);
+  if (!Number.isFinite(value)) return 0;
+  return Math.round((value + 1e-9) * 100) / 100;
+}
+
+export function formatMoney(n) {
+  const rounded = roundMoney(n);
+  const abs = Math.abs(rounded);
+  const whole = Math.abs(abs - Math.round(abs)) < 0.001;
+  const text = abs.toLocaleString("en-US", whole
+    ? { maximumFractionDigits: 0 }
+    : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${rounded < 0 ? "-" : ""}$${text}`;
+}
+
+export function commissionAmount(price, ratePercent) {
+  return roundMoney(Number(price) * (Number(ratePercent) / 100));
+}
+
+/** Residential dwelling, base municipal rate only. Conn. Gen. Stat. § 12-494. */
+export function residentialConveyance(price) {
+  const amount = Number(price);
+  if (!Number.isFinite(amount) || amount < 2000) {
+    return { state: 0, municipal: 0, total: 0, applies: false };
+  }
+  let state = 0;
+  if (amount <= 800000) state = amount * 0.0075;
+  else {
+    state = 800000 * 0.0075;
+    const mid = Math.min(amount, 2500000) - 800000;
+    state += mid * 0.0125;
+    if (amount > 2500000) state += (amount - 2500000) * 0.0225;
+  }
+  const municipal = amount * 0.0025;
+  return {
+    state: roundMoney(state),
+    municipal: roundMoney(municipal),
+    total: roundMoney(state + municipal),
+    applies: true,
+  };
+}
+
+/** 360-day year. Seller owns the listed days. Buyer reimburses the rest of a prepaid annual tax. */
+export function buyerTaxCredit(annual, sellerDays) {
+  const tax = Number(annual);
+  const days = Number(sellerDays);
+  if (!Number.isFinite(tax) || tax < 0 || !Number.isFinite(days) || days < 0 || days > 360) return null;
+  const daily = tax / 360;
+  const buyerDays = 360 - days;
+  return { daily: roundMoney(daily), buyerDays, credit: roundMoney(daily * buyerDays) };
+}
+
+/** A mill is $1 of tax per $1,000 of assessed value. */
+export function millTax(assessed, mills) {
+  return roundMoney(Number(assessed) * Number(mills) / 1000);
+}
+
+export function incomeValue(noi, capPercent) {
+  const income = Number(noi);
+  const cap = Number(capPercent) / 100;
+  if (!Number.isFinite(income) || !Number.isFinite(cap) || cap <= 0) return null;
+  return roundMoney(income / cap);
+}
+
 const BUDDY_STOP = new Set([
   "what", "whats", "is", "an", "a", "the", "of", "on", "for", "me", "about",
   "does", "do", "mean", "means", "meaning", "define", "defined", "how", "why",
