@@ -47,7 +47,7 @@ export function createState() {
     journey: null,
     routeIndex: 0,
     examDate: null,
-    settings: { sound: false, theme: "outdoors", dog: true, dogName: "Hudson" },
+    settings: { sound: false, theme: "outdoors", dog: true, dogName: "Hudson", readAloud: false },
     mock: null,
     session: null,
     portions: {
@@ -628,7 +628,7 @@ const BUDDY_STOP = new Set([
 ]);
 
 export function tutorUrl(config) {
-  const raw = String(config?.askTutorUrl || "").trim();
+  const raw = String(config?.talkTutorUrl || config?.askTutorUrl || "").trim();
   if (!raw) return "";
   try {
     const url = new URL(raw);
@@ -637,6 +637,39 @@ export function tutorUrl(config) {
   } catch {
     return "";
   }
+}
+
+const TRAIL_LEADS = [
+  "Good question. I shook the pack.",
+  "I like this bend. Here is what the notes say.",
+  "Hold the map still. I found it.",
+];
+
+const TRAIL_NUDGES = [
+  "Nice work. Three short questions are ready if you want the climb.",
+  "You are doing the work. Quiz me on this when you want three more.",
+  "That one belongs in the pack. Hit Quiz me on this and walk it.",
+];
+
+const TRAIL_MISSES = [
+  "I looked through the glossary, the Connecticut notes, and the explanations. That phrase is not on this trail. Try easement, or CT dual agency.",
+  "Nothing in the pack matches that. Try a course word, like easement or dual agency. I am rooting for the next one.",
+];
+
+function trailPick(seed, lines) {
+  const n = [...String(seed || "trail")].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  return lines[n % lines.length];
+}
+
+export function trailBuddyLines(query, found) {
+  const seed = String(query || "trail");
+  if (!found) return { lead: trailPick(seed, TRAIL_MISSES), nudge: "Try another bend. You will get there." };
+  return {
+    lead: trailPick(seed, TRAIL_LEADS),
+    nudge: found.related?.length
+      ? trailPick(`${seed}q`, TRAIL_NUDGES)
+      : "That is the note I have. Keep going. You are building the habit.",
+  };
 }
 
 export function spokenLetters(transcript) {

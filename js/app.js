@@ -5,7 +5,7 @@ import {
   themeId, displayStem, ctLawEventsForStop, THEMES,
   EXAM_SHAPE, portionReadiness, hydratePortions, chapterStudyPlan,
   companion, companionCheer, cleanDogName, liveStreak, DEFAULT_DOG_NAME,
-  searchBuddy, tutorUrl, spokenLetters,
+  searchBuddy, tutorUrl, spokenLetters, trailBuddyLines,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -23,6 +23,7 @@ let glossary = [];
 let tutorConfig = {};
 let buddyLog = [];
 let buddyDraft = "";
+let spokenMark = "";
 let micRec = null;
 let micTarget = "";
 let state = loadState();
@@ -122,7 +123,10 @@ function paintChrome() {
 }
 
 function go(next) {
-  if (next !== screen) stopMic();
+  if (next !== screen) {
+    stopMic();
+    hush();
+  }
   if (screen === "daily" && next !== "daily") freezeDaily();
   if (screen === "mock" && next !== "mock") freezeMock();
   screen = next;
@@ -234,6 +238,7 @@ function render() {
     about: viewAbout,
     daily: viewDaily,
     buddy: viewBuddy,
+    handsfree: viewHandsFree,
   };
   main.classList.toggle("is-dash", screen === "home");
   (views[screen] || viewHome)();
@@ -395,13 +400,13 @@ function viewHome() {
         <span class="muted">Quick drill</span>
       </button>
       <article class="trail-card dash-span tile-talk">
-        <p class="kicker">Talk instead of type</p>
-        <p>On an iPhone, tap the mic on the keyboard. Say period or comma when you want that punctuation.</p>
-        <p>On Android, tap the Gboard mic on the keyboard.</p>
-        <p class="muted">Study Buddy and the crossword add a mic when the browser allows it. If you do not see one, the keyboard mic still works.</p>
+        <p class="kicker">Hands-free tips</p>
+        <p>Use the microphone key on an iPhone or Android keyboard, or Trail Buddy's mic when this browser has one.</p>
+        <button class="btn btn-pine" type="button" data-act="handsfree">Open hands-free tips</button>
       </article>
     </div>
     </div>
+    ${tutorDash()}
     <p class="fine dash-note">Unofficial study aid. Not affiliated with PSI or the Department of Consumer Protection.</p>`;
 }
 
@@ -452,6 +457,12 @@ function viewQuestion() {
       </div>
     </article>`;
   if (!answered) say(question.stem);
+  if (state.settings?.readAloud) {
+    const spoken = !answered
+      ? `Question. ${question.stem} ${question.choices.map((choice, index) => `Choice ${index + 1}. ${choice}.`).join(" ")}`
+      : (quizMode ? "" : `${session.choice === question.answer ? "That holds up." : "Useful miss."} ${question.explanation}`);
+    if (spoken) speakText(`q:${question.id}:${session.index}:${answered ? "explain" : "ask"}`, spoken);
+  }
 }
 
 function explainBlock(question, choice) {
@@ -834,7 +845,13 @@ function buddyKindLabel(kind) {
   if (kind === "law") return "Connecticut note";
   if (kind === "explain") return "Question explanation";
   if (kind === "glossary") return "Glossary";
-  return "Study Buddy";
+  return "Trail Buddy";
+}
+
+function tutorDash() {
+  const link = tutorUrl(tutorConfig);
+  if (!link) return "";
+  return `<p class="tutor-dash"><a class="btn btn-quiet" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Talk to my tutor</a></p>`;
 }
 
 function viewBuddy() {
@@ -851,19 +868,25 @@ function viewBuddy() {
         : "";
       const heading = row.term
         ? `<p><strong>${esc(prettyTerm(row.term))}.</strong> ${esc(row.text)}</p>`
-        : `${row.title ? `<p><strong>${esc(row.title)}</strong></p>` : ""}<p>${esc(row.text)}</p>`;
-      return `<div class="bubble buddy"><p class="kicker">${esc(buddyKindLabel(row.kind))}</p>${heading}${source}${quiz}</div>`;
+        : `${row.title ? `<p><strong>${esc(row.title)}</strong></p>` : ""}${row.text ? `<p>${esc(row.text)}</p>` : ""}`;
+      const lead = row.lead ? `<p class="trail-lead">${esc(row.lead)}</p>` : "";
+      const nudge = row.nudge ? `<p class="trail-nudge">${esc(row.nudge)}</p>` : "";
+      return `<div class="bubble buddy"><p class="kicker">${esc(buddyKindLabel(row.kind))}</p>${lead}${heading}${source}${nudge}${quiz}</div>`;
     }).join("")
-    : `<p class="lede">Ask in your own words. Study Buddy searches this app's glossary, Connecticut notes, and question explanations. It stays on this phone.</p>`;
+    : `<p class="lede">Ask out loud or type. I search the glossary, the Connecticut notes, and the explanations in this pack. I stay on this phone.</p>`;
   const tutor = link
-    ? `<a class="btn btn-quiet tutor-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Ask my tutor</a>`
+    ? `<a class="btn btn-quiet tutor-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Talk to my tutor</a>`
     : "";
+  const voiceHint = window.speechSynthesis
+    ? ""
+    : `<p class="fine">This browser will not read aloud. The words stay on the screen.</p>`;
   main.innerHTML = `
     <section class="card buddy-card">
-      <h2>Study Buddy</h2>
+      <h2>Trail Buddy</h2>
+      <p class="note buddy-note">Trail Buddy is a study helper, not a counselor. These notes are for the exam, not advice for a live deal.</p>
       <div class="buddy-log">${log}</div>
       <form id="buddy-form" class="buddy-form">
-        <label class="sr" for="buddy-q">Ask Study Buddy</label>
+        <label class="sr" for="buddy-q">Ask Trail Buddy</label>
         <div class="mic-row">
           <input id="buddy-q" type="text" autocomplete="off" enterkeyhint="send" placeholder="What is an easement?" value="${esc(buddyDraft)}">
           ${micButton("buddy-q")}
@@ -871,7 +894,28 @@ function viewBuddy() {
         </div>
         ${micHint()}
       </form>
+      <button type="button" class="btn btn-pine" data-act="toggle-read" aria-pressed="${state.settings?.readAloud ? "true" : "false"}">${state.settings?.readAloud ? "Read aloud is on" : "Read aloud is off"}</button>
+      <p class="fine">When read aloud is on, Trail Buddy speaks answers, and each question speaks its choices. Save that for when you are parked.</p>
+      ${voiceHint}
       ${tutor}
+    </section>`;
+}
+
+function viewHandsFree() {
+  main.innerHTML = `
+    <section class="card">
+      <h2>Hands-free tips</h2>
+      <p class="note buddy-note">Trail Buddy is a study helper, not a counselor. Save the talking round for when you are parked.</p>
+      <h3>Phone keyboard</h3>
+      <p>On an iPhone, tap the microphone key on the keyboard. Speak your question. Say period or comma when you want that punctuation.</p>
+      <p>On Android, tap the microphone key on the keyboard. Speak, then glance at the words before you send.</p>
+      <h3>In this app</h3>
+      <p>Trail Buddy has its own mic when the browser supports speech-to-text. A spoken question is sent for you. The crossword mic fills the current word. If you do not see a mic button, the keyboard microphone key still works.</p>
+      <p>Turn on Read aloud on the Trail Buddy screen. The answer is spoken, and the next question is spoken with its four choices. You can answer with the 1 to 4 keys. Turn it off anytime.</p>
+      <div class="stack">
+        <button class="btn btn-primary" type="button" data-tab="buddy">Open Trail Buddy</button>
+        <button class="btn btn-quiet" type="button" data-tab="home">Back to the trailhead</button>
+      </div>
     </section>`;
 }
 
@@ -880,29 +924,38 @@ function askBuddy(raw) {
   if (!text) return;
   buddyDraft = "";
   const found = searchBuddy(text, glossary, bank?.questions || []);
+  const lines = trailBuddyLines(text, found);
   buddyLog.push({ role: "user", text });
+  const body = found
+    ? (found.term ? `${prettyTerm(found.term)}. ${found.text}` : found.text)
+    : "";
   if (!found) {
     buddyLog.push({
       role: "buddy",
       kind: "miss",
       term: "",
-      text: "Nothing in the glossary, the Connecticut notes, or the explanations matches that. Try a course term, such as easement or dual agency.",
+      lead: lines.lead,
+      nudge: lines.nudge,
+      text: "",
       source: null,
       related: [],
     });
-    say("No match in the study notes.");
   } else {
     buddyLog.push({
       role: "buddy",
       kind: found.kind,
       term: found.term,
       title: found.title || "",
+      lead: lines.lead,
+      nudge: lines.nudge,
       text: found.text,
       source: found.source,
       related: found.related,
     });
-    say(found.text);
   }
+  const spoken = `${lines.lead} ${body} ${lines.nudge}`.replace(/\s+/g, " ").trim();
+  say(spoken);
+  speakText(`buddy:${buddyLog.length}:${text}`, spoken);
   if (buddyLog.length > 40) buddyLog.splice(0, buddyLog.length - 40);
   viewBuddy();
   const input = main.querySelector("#buddy-q");
@@ -1601,6 +1654,10 @@ function onClick(event) {
     startBuddyQuiz();
     return;
   }
+  if (act === "handsfree") {
+    go("handsfree");
+    return;
+  }
   if (button.dataset.choice !== undefined) chooseAnswer(Number(button.dataset.choice));
   if (button.dataset.mockChoice !== undefined) chooseMock(Number(button.dataset.mockChoice));
   if (button.dataset.topic) startJourney(button.dataset.topic);
@@ -1715,6 +1772,11 @@ function onClick(event) {
     save();
     say(`${state.settings.dogName} is on the trail.`);
     viewSettings();
+  } else if (act === "toggle-read") {
+    state.settings.readAloud = !state.settings?.readAloud;
+    save();
+    if (!state.settings.readAloud) hush();
+    viewBuddy();
   } else if (act === "toggle-sound") {
     state.settings.sound = !state.settings.sound;
     save();
@@ -1910,6 +1972,24 @@ function compute(expr) {
   }
 }
 
+function speakText(mark, text) {
+  if (!state.settings?.readAloud || !text) return;
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  if (spokenMark === mark) return;
+  spokenMark = mark;
+  synth.cancel();
+  const utter = new SpeechSynthesisUtterance(String(text).slice(0, 700));
+  utter.lang = "en-US";
+  utter.rate = 0.96;
+  synth.speak(utter);
+}
+
+function hush() {
+  spokenMark = "";
+  try { window.speechSynthesis?.cancel(); } catch { /* this browser has no voice */ }
+}
+
 function speechCtor() {
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
 }
@@ -1958,7 +2038,11 @@ function writeTranscript(id, transcript) {
   if (!input) return;
   const next = id === "buddy-q" && input.value.trim() ? `${input.value.trim()} ${said}` : said;
   input.value = next;
-  if (id === "buddy-q") buddyDraft = next;
+  if (id === "buddy-q") {
+    buddyDraft = next;
+    askBuddy(next);
+    return;
+  }
   say(said);
 }
 
@@ -2116,7 +2200,7 @@ async function boot() {
   else if (saved === "mock" && state.mock) {
     if (!state.mock.submitted) resumeMock();
     screen = "mock";
-  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily", "loop", "buddy"].includes(saved)) screen = saved;
+  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily", "loop", "buddy", "handsfree"].includes(saved)) screen = saved;
   else screen = "home";
   render();
   if ("serviceWorker" in navigator) {

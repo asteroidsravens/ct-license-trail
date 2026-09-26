@@ -7,7 +7,7 @@ import {
   displayStem, ctLawEventsForStop, themeId,
   portionOf, portionReadiness, chapterStudyPlan, hydratePortions, EXAM_SHAPE,
   cleanDogName, companion, companionCheer, DEFAULT_DOG_NAME, liveStreak,
-  searchBuddy, tutorUrl, spokenLetters,
+  searchBuddy, tutorUrl, spokenLetters, trailBuddyLines,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -304,10 +304,12 @@ assert.equal(portionReadiness(seeded)[0].seen, 0);
 
 const glossary = JSON.parse(readFileSync(new URL("../data/glossary.json", import.meta.url), "utf8")).entries;
 const tutor = JSON.parse(readFileSync(new URL("../data/tutor.json", import.meta.url), "utf8"));
-assert.equal(tutor.askTutorUrl, "");
+assert.equal(tutor.talkTutorUrl, "");
 assert.equal(tutorUrl(tutor), "");
-assert.equal(tutorUrl({ askTutorUrl: "javascript:alert(1)" }), "");
+assert.equal(tutorUrl({ talkTutorUrl: "javascript:alert(1)" }), "");
 assert.equal(tutorUrl({ askTutorUrl: "https://example.com/tutor" }), "https://example.com/tutor");
+assert.equal(tutorUrl({ talkTutorUrl: "https://example.com/trail" }), "https://example.com/trail");
+assert.equal(createState().settings.readAloud, false);
 assert.equal(spokenLetters("an easement."), "EASEMENT");
 assert.equal(spokenLetters("the deed"), "DEED");
 const easement = searchBuddy("what is an easement", glossary, questions);
@@ -322,5 +324,16 @@ assert.match(`${dual.title} ${dual.text}`, /dual[- ]agency/i);
 assert.ok(dual.source?.url && dual.source.label);
 assert.equal(dual.related.length, 3);
 assert.ok(dual.related.every((id) => /dual[- ]agency/i.test(`${byId[id].stem} ${byId[id].explanation}`)));
+const voice = trailBuddyLines("what is an easement", easement);
+assert.match(voice.lead, /pack|notes|map/i);
+assert.match(voice.nudge, /Quiz me on this/i);
+const miss = trailBuddyLines("zzzznotaterm", null);
+assert.match(miss.lead, /glossary|pack/i);
+assert.equal(/counselor/i.test(`${voice.lead} ${voice.nudge} ${miss.lead} ${miss.nudge}`), false);
+const appSource = readFileSync(new URL("../js/app.js", import.meta.url), "utf8");
+assert.match(appSource, /study helper, not a counselor/);
+assert.match(appSource, /Hands-free tips/);
+assert.match(appSource, /Talk to my tutor/);
+assert.match(appSource, /speechSynthesis/);
 
 console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${chapterNumbers.length} chapters`);
