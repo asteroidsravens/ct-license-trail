@@ -7,6 +7,7 @@ import {
   displayStem, ctLawEventsForStop, themeId,
   portionOf, portionReadiness, chapterStudyPlan, hydratePortions, EXAM_SHAPE,
   cleanDogName, companion, companionCheer, DEFAULT_DOG_NAME, liveStreak,
+  searchBuddy, tutorUrl, spokenLetters,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -300,5 +301,26 @@ assert.equal(plan2.ct.length, 0);
 assert.ok(plan2.principles.length > 0);
 const seeded = hydratePortions(createState(), questions);
 assert.equal(portionReadiness(seeded)[0].seen, 0);
+
+const glossary = JSON.parse(readFileSync(new URL("../data/glossary.json", import.meta.url), "utf8")).entries;
+const tutor = JSON.parse(readFileSync(new URL("../data/tutor.json", import.meta.url), "utf8"));
+assert.equal(tutor.askTutorUrl, "");
+assert.equal(tutorUrl(tutor), "");
+assert.equal(tutorUrl({ askTutorUrl: "javascript:alert(1)" }), "");
+assert.equal(tutorUrl({ askTutorUrl: "https://example.com/tutor" }), "https://example.com/tutor");
+assert.equal(spokenLetters("an easement."), "EASEMENT");
+assert.equal(spokenLetters("the deed"), "DEED");
+const easement = searchBuddy("what is an easement", glossary, questions);
+assert.equal(easement.kind, "glossary");
+assert.equal(easement.term, "EASEMENT");
+assert.match(easement.text, /right to use/i);
+assert.equal(easement.related.length, 3);
+assert.ok(easement.related.every((id) => /easement/i.test(`${byId[id].stem} ${byId[id].explanation}`)));
+const dual = searchBuddy("CT dual agency", glossary, questions);
+assert.equal(dual.kind, "law");
+assert.match(`${dual.title} ${dual.text}`, /dual[- ]agency/i);
+assert.ok(dual.source?.url && dual.source.label);
+assert.equal(dual.related.length, 3);
+assert.ok(dual.related.every((id) => /dual[- ]agency/i.test(`${byId[id].stem} ${byId[id].explanation}`)));
 
 console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${chapterNumbers.length} chapters`);
