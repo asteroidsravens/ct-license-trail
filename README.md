@@ -67,6 +67,8 @@ Figures that could not be pinned to a stable official text were left out. That i
 
 Pushes to `main` run `.github/workflows/pages.yml`, which publishes this folder with GitHub Pages. The site uses relative paths so it works as a project site.
 
+The public URL is `https://asteroidsravens.github.io/ct-license-trail/`. Pages has to be turned on once in the repository settings: **Settings → Pages → Build and deployment → Source: GitHub Actions**. The workflow will try to enable that itself. If the token cannot, the Actions log says the Pages site was not found, and the setting above is the fix. After that, the next push to `main` publishes the site.
+
 ## Disclaimer
 
 CT License Trail is an unofficial study aid. Exam rules, fees, tax rates, and license deadlines change. Read the current PSI bulletin, the Department of Consumer Protection pages, the General Statutes, and the regulations before you rely on a number. Nothing here is legal advice or a promise about an exam result.
