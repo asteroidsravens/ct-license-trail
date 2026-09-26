@@ -16,6 +16,8 @@ Open the site, or run it locally (see below). Progress stays in this browser (`l
 - **Progress.** The trailhead home screen is the hub: town trail, crossword, exam countdown, readiness for the 80-question general portion and the 35-question Connecticut portion, chapter count, review queue, ranger badge, and a math drill. An optional trail dog walks along; the default name is Hudson and can be changed on this phone.
 - **Theme.** Outdoors is the default scene around questions that have one. Adventure, History, and Classic are in settings. The scene never changes the facts.
 - **Screens.** The layout is built for a phone around 390 pixels wide. On a wide window the shell stops at 1080 pixels, the trailhead tiles sit in a wider grid, and the crossword grid sits beside its clues. Crossword keys: letters, arrows, and Tab for the next clue. Quiz and mock answers: keys 1 to 4.
+- **Study Buddy.** The Buddy tab searches this app's glossary, Connecticut notes, and question explanations on the phone. No API key. A match can start a three-question quiz. `data/tutor.json` holds `askTutorUrl`. Leave it empty and the Ask my tutor button stays hidden. Set an http or https link when you have a tutor page.
+- **Talk instead of type.** Where the browser supports the Web Speech API, a mic sits on Study Buddy, the crossword, and the trail dog's name. Saying a word fills the current crossword entry. If the browser has no speech button, use the mic on the phone keyboard. The trailhead card describes that for iPhone and for Gboard on Android.
 - **Review.** Missed questions come back immediately. A correct answer waits longer the next time.
 - **Daily crossword.** A new original grid each calendar day, built only from course chapters you have checked. The starting checklist is chapters 2, 3, 6, 7, 14, 15, 16, 17, and 20. A single chapter uses a smaller mini grid when its word list is short. With every chapter checked, Monday is the smallest, clues get harder through Saturday, and Sunday is larger. Tap a square to select it, tap again to switch across and down. Check or reveal a letter, a word, or the whole puzzle. The timer pauses when you leave. A clean solve adds 40 XP and one of each supply that is not already full. A solve that used a reveal adds 12 XP. The crossword streak and the in-progress grid stay on this phone. XP for the crossword counts once per calendar day.
 - **Course chapters.** The chapter list lives in `data/course.json`. Check the ones you have finished under Chapters I've completed. The road follows that checklist. Connecticut-law questions carry a CT Law badge and are tagged to those chapters, so a stop can include a Connecticut-law event from a checked chapter. Replace the chapter list to match a syllabus, retag `words` and each question's `chapter`, then rebuild the crossword library.
@@ -39,6 +41,7 @@ Check the game rules, the bank, and the crossword library:
 node scripts/test_game.mjs
 python3 scripts/course_units.py
 python3 scripts/build_crosswords.py
+python3 scripts/build_glossary.py
 ```
 
 ## Add questions

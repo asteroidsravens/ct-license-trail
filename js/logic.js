@@ -619,3 +619,150 @@ export function roadTopics(topics, questions = null, chapters = null) {
   const allowed = new Set(chapters);
   return base.filter((topic) => questions.some((q) => q.topic === topic.id && allowed.has(q.chapter)));
 }
+
+const BUDDY_STOP = new Set([
+  "what", "whats", "is", "an", "a", "the", "of", "on", "for", "me", "about",
+  "does", "do", "mean", "means", "meaning", "define", "defined", "how", "why",
+  "when", "who", "are", "to", "in", "and", "or", "my", "this", "that", "it",
+  "please", "tell", "explain",
+]);
+
+export function tutorUrl(config) {
+  const raw = String(config?.askTutorUrl || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+export function spokenLetters(transcript) {
+  const words = String(transcript || "")
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const skip = new Set(["a", "an", "the", "to", "of"]);
+  while (words.length && skip.has(words[0])) words.shift();
+  return words.join("").replace(/[^a-z]/g, "").toUpperCase();
+}
+
+function buddyQuery(raw) {
+  const text = String(raw || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+  const wantsCt = /\bct\b|\bconnecticut\b|\bstatute\b|\bcgs\b/.test(text);
+  const wantsDefine = /\bwhat\b|\bdefine\b|\bmeaning\b|\bmeans\b/.test(text);
+  const tokens = text.split(" ").filter((token) => token.length > 1 && !BUDDY_STOP.has(token) && token !== "ct" && token !== "connecticut");
+  const useful = tokens.filter((token) => token.length >= 4);
+  return { text, tokens: useful.length ? useful : tokens, wantsCt, wantsDefine };
+}
+
+function termHit(term, token) {
+  if (!term) return false;
+  if (term === token) return true;
+  return token.length >= 4 && term.startsWith(token);
+}
+
+function scoreBuddyDoc(doc, query) {
+  const term = String(doc.term || "").toLowerCase();
+  const body = String(doc.text || "").toLowerCase();
+  const title = String(doc.title || "").toLowerCase();
+  let score = 0;
+  let hits = 0;
+  for (const token of query.tokens) {
+    if (termHit(term, token)) {
+      hits += 1;
+      score += 28 + token.length;
+    } else if (body.includes(token)) {
+      hits += 1;
+      score += 12 + Math.min(token.length, 8);
+    } else if (title.includes(token)) {
+      hits += 1;
+      score += 6;
+    }
+  }
+  if (!hits) return 0;
+  if (hits === query.tokens.length) score += 20;
+  const joined = query.tokens.join("");
+  if (term && (term === joined || (term === query.tokens[0] && query.tokens.length === 1))) score += 60;
+  const phrase = query.tokens.join(" ");
+  if (phrase.length > 4 && body.includes(phrase)) score += 36;
+  else if (phrase.length > 4 && `${title} ${body}`.includes(phrase)) score += 14;
+  if (query.wantsDefine && doc.kind === "glossary") score += 18;
+  if (query.wantsCt && doc.kind === "law") score += 36;
+  if (query.wantsCt && doc.kind !== "law") score -= 10;
+  return score;
+}
+
+function relatedQuestionIds(doc, query, questions, limit) {
+  const ranked = [];
+  for (const question of questions) {
+    if (question.id === doc.questionId) continue;
+    const stem = String(question.stem || "").toLowerCase();
+    const blob = `${stem} ${question.explanation || ""}`.toLowerCase();
+    let score = 0;
+    let hits = 0;
+    for (const token of query.tokens) {
+      if (!blob.includes(token)) continue;
+      hits += 1;
+      score += 10;
+      if (stem.includes(token)) score += 8;
+    }
+    if (!hits) continue;
+    const explain = String(question.explanation || "").toLowerCase();
+    if (query.tokens.some((token) => stem.slice(0, 80).includes(token) || explain.slice(0, 80).includes(token))) score += 6;
+    if (doc.topic && question.topic === doc.topic) score += 6;
+    if (doc.chapter && question.chapter === doc.chapter) score += 4;
+    if (doc.kind === "law" && (question.ctLaw || String(question.topic || "").startsWith("ct-"))) score += 8;
+    ranked.push({ id: question.id, score });
+  }
+  ranked.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  return ranked.slice(0, limit).map((row) => row.id);
+}
+
+export function searchBuddy(raw, glossary, questions, limit = 3) {
+  const query = buddyQuery(raw);
+  if (!query.tokens.length) return null;
+  const docs = [];
+  for (const entry of glossary || []) {
+    if (!entry?.term || !entry.text) continue;
+    docs.push({
+      kind: "glossary",
+      questionId: null,
+      term: entry.term,
+      text: entry.text,
+      source: entry.source?.url ? entry.source : null,
+      chapter: entry.chapter || null,
+      topic: null,
+      title: "",
+    });
+  }
+  for (const question of questions || []) {
+    if (!question?.explanation) continue;
+    const law = Boolean(question.ctLaw) || String(question.topic || "").startsWith("ct-");
+    docs.push({
+      kind: law ? "law" : "explain",
+      questionId: question.id,
+      term: "",
+      text: question.explanation,
+      source: question.source?.url ? question.source : null,
+      chapter: question.chapter || null,
+      topic: question.topic || null,
+      title: question.stem || "",
+    });
+  }
+  let best = null;
+  for (const doc of docs) {
+    const score = scoreBuddyDoc(doc, query);
+    if (!score) continue;
+    if (!best || score > best.score) best = { score, doc };
+  }
+  if (!best) return null;
+  return {
+    ...best.doc,
+    score: best.score,
+    related: relatedQuestionIds(best.doc, query, questions || [], limit),
+  };
+}

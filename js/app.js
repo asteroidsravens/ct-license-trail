@@ -5,6 +5,7 @@ import {
   themeId, displayStem, ctLawEventsForStop, THEMES,
   EXAM_SHAPE, portionReadiness, hydratePortions, chapterStudyPlan,
   companion, companionCheer, cleanDogName, liveStreak, DEFAULT_DOG_NAME,
+  searchBuddy, tutorUrl, spokenLetters,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -18,6 +19,12 @@ let bank = null;
 let byId = {};
 let crosswords = null;
 let course = null;
+let glossary = [];
+let tutorConfig = {};
+let buddyLog = [];
+let buddyDraft = "";
+let micRec = null;
+let micTarget = "";
 let state = loadState();
 let screen = "home";
 let calcValue = "0";
@@ -107,13 +114,15 @@ function paintChrome() {
       || (tab === "math" && (screen === "math" || (screen === "question" && quizKind === "math")))
       || (tab === "exam" && ["exam", "mock"].includes(screen))
       || (tab === "review" && (screen === "review" || (screen === "question" && quizKind === "review")))
-      || (tab === "daily" && screen === "daily");
+      || (tab === "daily" && screen === "daily")
+      || (tab === "buddy" && (screen === "buddy" || quizKind === "buddy"));
     if (on) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
 }
 
 function go(next) {
+  if (next !== screen) stopMic();
   if (screen === "daily" && next !== "daily") freezeDaily();
   if (screen === "mock" && next !== "mock") freezeMock();
   screen = next;
@@ -224,6 +233,7 @@ function render() {
     settings: viewSettings,
     about: viewAbout,
     daily: viewDaily,
+    buddy: viewBuddy,
   };
   main.classList.toggle("is-dash", screen === "home");
   (views[screen] || viewHome)();
@@ -384,6 +394,12 @@ function viewHome() {
         <strong class="dash-num">${mathCount}</strong>
         <span class="muted">Quick drill</span>
       </button>
+      <article class="trail-card dash-span tile-talk">
+        <p class="kicker">Talk instead of type</p>
+        <p>On an iPhone, tap the mic on the keyboard. Say period or comma when you want that punctuation.</p>
+        <p>On Android, tap the Gboard mic on the keyboard.</p>
+        <p class="muted">Study Buddy and the crossword add a mic when the browser allows it. If you do not see one, the keyboard mic still works.</p>
+      </article>
     </div>
     </div>
     <p class="fine dash-note">Unofficial study aid. Not affiliated with PSI or the Department of Consumer Protection.</p>`;
@@ -809,6 +825,97 @@ function dueInChapters() {
   return dueReviews(state).filter((id) => allowed.has(byId[id]?.chapter));
 }
 
+function prettyTerm(term) {
+  const lower = String(term || "").toLowerCase();
+  return lower ? lower.charAt(0).toUpperCase() + lower.slice(1) : "";
+}
+
+function buddyKindLabel(kind) {
+  if (kind === "law") return "Connecticut note";
+  if (kind === "explain") return "Question explanation";
+  if (kind === "glossary") return "Glossary";
+  return "Study Buddy";
+}
+
+function viewBuddy() {
+  const link = tutorUrl(tutorConfig);
+  const log = buddyLog.length
+    ? buddyLog.map((row, index) => {
+      if (row.role === "user") return `<p class="bubble user">${esc(row.text)}</p>`;
+      const last = index === buddyLog.length - 1;
+      const source = row.source?.url
+        ? `<p class="source"><a href="${esc(row.source.url)}" target="_blank" rel="noopener noreferrer">Source: ${esc(row.source.label || "Source")}</a></p>`
+        : "";
+      const quiz = last && row.related?.length
+        ? `<button type="button" class="btn btn-pine" data-act="buddy-quiz">Quiz me on this</button>`
+        : "";
+      const heading = row.term
+        ? `<p><strong>${esc(prettyTerm(row.term))}.</strong> ${esc(row.text)}</p>`
+        : `${row.title ? `<p><strong>${esc(row.title)}</strong></p>` : ""}<p>${esc(row.text)}</p>`;
+      return `<div class="bubble buddy"><p class="kicker">${esc(buddyKindLabel(row.kind))}</p>${heading}${source}${quiz}</div>`;
+    }).join("")
+    : `<p class="lede">Ask in your own words. Study Buddy searches this app's glossary, Connecticut notes, and question explanations. It stays on this phone.</p>`;
+  const tutor = link
+    ? `<a class="btn btn-quiet tutor-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Ask my tutor</a>`
+    : "";
+  main.innerHTML = `
+    <section class="card buddy-card">
+      <h2>Study Buddy</h2>
+      <div class="buddy-log">${log}</div>
+      <form id="buddy-form" class="buddy-form">
+        <label class="sr" for="buddy-q">Ask Study Buddy</label>
+        <div class="mic-row">
+          <input id="buddy-q" type="text" autocomplete="off" enterkeyhint="send" placeholder="What is an easement?" value="${esc(buddyDraft)}">
+          ${micButton("buddy-q")}
+          <button class="btn btn-primary" type="submit">Send</button>
+        </div>
+        ${micHint()}
+      </form>
+      ${tutor}
+    </section>`;
+}
+
+function askBuddy(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return;
+  buddyDraft = "";
+  const found = searchBuddy(text, glossary, bank?.questions || []);
+  buddyLog.push({ role: "user", text });
+  if (!found) {
+    buddyLog.push({
+      role: "buddy",
+      kind: "miss",
+      term: "",
+      text: "Nothing in the glossary, the Connecticut notes, or the explanations matches that. Try a course term, such as easement or dual agency.",
+      source: null,
+      related: [],
+    });
+    say("No match in the study notes.");
+  } else {
+    buddyLog.push({
+      role: "buddy",
+      kind: found.kind,
+      term: found.term,
+      title: found.title || "",
+      text: found.text,
+      source: found.source,
+      related: found.related,
+    });
+    say(found.text);
+  }
+  if (buddyLog.length > 40) buddyLog.splice(0, buddyLog.length - 40);
+  viewBuddy();
+  const input = main.querySelector("#buddy-q");
+  if (input) input.focus();
+}
+
+function startBuddyQuiz() {
+  const last = [...buddyLog].reverse().find((row) => row.role === "buddy" && row.related?.length);
+  if (!last) return;
+  stopMic();
+  startSession("buddy", last.related.slice(0, 3), null);
+}
+
 function viewReviewHome() {
   const due = dueInChapters();
   const waiting = Object.values(state.review).filter((row) => row.due > Date.now()).length;
@@ -864,7 +971,11 @@ function viewSettings() {
       <p>Optional. A dog walks the town trail and leaves a short cheer. The name stays on this phone.</p>
       <button class="btn btn-pine" data-act="toggle-dog" aria-pressed="${companion(state).on ? "true" : "false"}">${companion(state).on ? `${esc(companion(state).name)} is on the trail` : "Dog is off the trail"}</button>
       <label class="field" for="dog-name">Name</label>
-      <input id="dog-name" maxlength="20" autocomplete="off" value="${esc(companion(state).name)}">
+      <div class="mic-row">
+        <input id="dog-name" type="text" maxlength="20" autocomplete="off" value="${esc(companion(state).name)}">
+        ${micButton("dog-name")}
+      </div>
+      ${micHint()}
       <div class="stack" style="margin-top:12px">
         <button class="btn btn-primary" data-act="save-dog">Save name</button>
       </div>
@@ -1190,7 +1301,8 @@ function viewDaily() {
       </div>
       <div class="xw-dock">
         <p class="xw-clue"></p>
-        <p class="muted xw-keys">Type a letter. Arrow keys move. Tab jumps to the next clue.</p>
+        <p class="muted xw-keys">Type a letter. Arrow keys move. Tab jumps to the next clue. Say a word to fill this entry.</p>
+        ${micButton("crossword") ? `<div class="mic-row xw-mic">${micButton("crossword")}</div>` : micHint()}
         <div class="xw-board" aria-label="Keyboard">
           ${keyRows.map((row) => `<div class="xw-keyrow">${[...row].map((ch) => `<button type="button" data-xw="${ch}" aria-label="${ch}">${ch}</button>`).join("")}</div>`).join("")}
           <div class="xw-keyrow xw-keyrow-wide">
@@ -1324,6 +1436,46 @@ function xwType(letter) {
   focusCrosswordCell();
 }
 
+function fillSpokenEntry(transcript) {
+  const letters = spokenLetters(transcript);
+  const picked = todayPuzzle();
+  if (!picked) return;
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
+  if (prog.done) return;
+  const entry = entryAt(puzzle, prog.row, prog.col, prog.dir);
+  if (!entry) {
+    say("Select a white square first.");
+    return;
+  }
+  if (!letters) {
+    say("No letters in that.");
+    return;
+  }
+  const cells = cellsOf(entry, prog.dir);
+  cells.forEach(([r, c]) => {
+    const index = r * puzzle.size + c;
+    prog.letters[index] = "";
+    prog.bad[index] = false;
+    prog.revealed[index] = false;
+  });
+  const count = Math.min(letters.length, cells.length);
+  for (let i = 0; i < count; i += 1) {
+    const [r, c] = cells[i];
+    const index = r * puzzle.size + c;
+    prog.letters[index] = letters[i];
+    if (letters[i] !== puzzle.grid[r][c]) prog.revealed[index] = false;
+  }
+  const last = cells[Math.max(0, count - 1)];
+  prog.row = last[0];
+  prog.col = last[1];
+  finishIfSolved(puzzle, prog, picked.dateKey);
+  save();
+  paintDaily();
+  focusCrosswordCell();
+  say(`Heard ${letters}.`);
+}
+
 function xwBackspace() {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
@@ -1439,6 +1591,14 @@ function onClick(event) {
     else if (tab === "math") go("math");
     else if (tab === "exam") go("exam");
     else go(tab);
+    return;
+  }
+  if (act === "mic") {
+    toggleMic(button.dataset.mic || "");
+    return;
+  }
+  if (act === "buddy-quiz") {
+    startBuddyQuiz();
     return;
   }
   if (button.dataset.choice !== undefined) chooseAnswer(Number(button.dataset.choice));
@@ -1639,6 +1799,13 @@ function advanceSession() {
       finishLoopStep(session);
       return;
     }
+    if (session.kind === "buddy") {
+      state.session = null;
+      save();
+      say("Buddy quiz saved.");
+      go("buddy");
+      return;
+    }
     const finishedTown = topicById(session.topicId);
     state.session = null;
     if (session.kind === "journey") {
@@ -1743,6 +1910,106 @@ function compute(expr) {
   }
 }
 
+function speechCtor() {
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function micIcon() {
+  return `<svg class="mic-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zm-7 9a1 1 0 1 0 2 0 5 5 0 0 0 10 0 1 1 0 1 1 2 0 7 7 0 0 1-6 6.9V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.1A7 7 0 0 1 5 12z"/></svg>`;
+}
+
+function micButton(id) {
+  if (!speechCtor()) return "";
+  const on = Boolean(micRec) && micTarget === id;
+  return `<button type="button" class="btn btn-quiet mic-btn ${on ? "mic-on" : ""}" data-act="mic" data-mic="${esc(id)}" aria-pressed="${on ? "true" : "false"}" aria-label="${on ? "Stop the microphone" : "Speak instead of typing"}">${micIcon()}<span>${on ? "Stop" : "Mic"}</span></button>`;
+}
+
+function micHint() {
+  if (speechCtor()) return "";
+  return `<p class="fine mic-hint">No speech button in this browser. Use the mic on your phone keyboard.</p>`;
+}
+
+function paintMicButtons() {
+  main.querySelectorAll("[data-act=mic]").forEach((button) => {
+    const on = Boolean(micRec) && button.dataset.mic === micTarget;
+    button.classList.toggle("mic-on", on);
+    button.setAttribute("aria-pressed", on ? "true" : "false");
+    button.setAttribute("aria-label", on ? "Stop the microphone" : "Speak instead of typing");
+    const label = button.querySelector("span");
+    if (label) label.textContent = on ? "Stop" : "Mic";
+  });
+}
+
+function stopMic() {
+  const rec = micRec;
+  micRec = null;
+  micTarget = "";
+  if (!rec) return;
+  rec.onresult = null;
+  rec.onerror = null;
+  rec.onend = null;
+  try { rec.stop(); } catch { /* already idle */ }
+}
+
+function writeTranscript(id, transcript) {
+  const said = String(transcript || "").trim();
+  if (!said) return;
+  const input = main.querySelector(`#${id}`);
+  if (!input) return;
+  const next = id === "buddy-q" && input.value.trim() ? `${input.value.trim()} ${said}` : said;
+  input.value = next;
+  if (id === "buddy-q") buddyDraft = next;
+  say(said);
+}
+
+function toggleMic(id) {
+  if (!id || !speechCtor()) return;
+  if (micRec && micTarget === id) {
+    stopMic();
+    paintMicButtons();
+    return;
+  }
+  stopMic();
+  const rec = new (speechCtor())();
+  rec.lang = "en-US";
+  rec.interimResults = false;
+  rec.continuous = false;
+  rec.maxAlternatives = 1;
+  micRec = rec;
+  micTarget = id;
+  rec.onresult = (event) => {
+    const said = event.results?.[0]?.[0]?.transcript || "";
+    if (id === "crossword") fillSpokenEntry(said);
+    else writeTranscript(id, said);
+  };
+  rec.onerror = (event) => {
+    const code = event?.error || "";
+    if (micRec === rec) {
+      micRec = null;
+      micTarget = "";
+    }
+    if (code === "not-allowed" || code === "service-not-allowed") say("The mic is blocked. You can still use the keyboard mic.");
+    else if (code !== "aborted" && code !== "no-speech") say("The mic did not catch that.");
+    paintMicButtons();
+  };
+  rec.onend = () => {
+    if (micRec === rec) {
+      micRec = null;
+      micTarget = "";
+    }
+    paintMicButtons();
+  };
+  try {
+    rec.start();
+    paintMicButtons();
+  } catch {
+    micRec = null;
+    micTarget = "";
+    paintMicButtons();
+    say("The mic did not start. Use the keyboard mic.");
+  }
+}
+
 function keyInField(event) {
   const el = event.target;
   if (!el || !el.tagName) return false;
@@ -1801,6 +2068,14 @@ function onKey(event) {
 
 document.querySelector(".tabs").addEventListener("click", onClick);
 main.addEventListener("click", onClick);
+main.addEventListener("submit", (event) => {
+  if (event.target?.id !== "buddy-form") return;
+  event.preventDefault();
+  askBuddy(event.target.querySelector("#buddy-q")?.value || "");
+});
+main.addEventListener("input", (event) => {
+  if (event.target?.id === "buddy-q") buddyDraft = event.target.value;
+});
 document.addEventListener("keydown", onKey);
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) {
@@ -1811,14 +2086,22 @@ document.addEventListener("visibilitychange", () => {
 });
 
 async function boot() {
-  const [questionResponse, crosswordResponse, courseResponse] = await Promise.all([
+  const [questionResponse, crosswordResponse, courseResponse, glossaryResponse] = await Promise.all([
     fetch("./data/questions.json"),
     fetch("./data/crosswords.json"),
     fetch("./data/course.json"),
+    fetch("./data/glossary.json"),
   ]);
   bank = await questionResponse.json();
   crosswords = await crosswordResponse.json();
   course = await courseResponse.json();
+  glossary = (await glossaryResponse.json()).entries || [];
+  try {
+    const tutorResponse = await fetch("./data/tutor.json");
+    tutorConfig = tutorResponse.ok ? await tutorResponse.json() : {};
+  } catch {
+    tutorConfig = {};
+  }
   byId = Object.fromEntries(bank.questions.map((q) => [q.id, q]));
   state = hydratePortions(state, bank.questions);
   if (state.mock && !state.mock.submitted && state.mock.running) {
@@ -1833,7 +2116,7 @@ async function boot() {
   else if (saved === "mock" && state.mock) {
     if (!state.mock.submitted) resumeMock();
     screen = "mock";
-  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily", "loop"].includes(saved)) screen = saved;
+  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily", "loop", "buddy"].includes(saved)) screen = saved;
   else screen = "home";
   render();
   if ("serviceWorker" in navigator) {

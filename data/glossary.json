@@ -1,0 +1,3278 @@
+{
+  "note": "Original definitions used by Study Buddy. Built from scripts/xword_bank.py. Do not paste a textbook glossary.",
+  "entries": [
+    {
+      "term": "ABLE",
+      "text": "Financially capable of completing the purchase",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "ABOUT",
+      "text": "Approximately, in an old description",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ABOVE",
+      "text": "Higher than",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ABSTRACT",
+      "text": "A summary of the documents in the chain of title",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "ACCELERATE",
+      "text": "To call an entire loan due after a default",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "ACCEPT",
+      "text": "To agree to an offer and form a contract",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "ACCRETION",
+      "text": "Gradual addition of land by water depositing soil",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "ACCRUED",
+      "text": "An expense built up but not yet paid",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "ACRE",
+      "text": "A land measure of 43,560 square feet",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "ADA",
+      "text": "The federal disability-access law, by its initials",
+      "source": null,
+      "chapter": 18
+    },
+    {
+      "term": "ADAPT",
+      "text": "How well an item fits the building, in fixture tests",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "ADVERSE",
+      "text": "Possession that is hostile to the owner's title",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "AFTER",
+      "text": "Later than",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "AGE",
+      "text": "How old an improvement is",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "AGENCY",
+      "text": "The relationship in which one person acts for another",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "AGENT",
+      "text": "A person authorized to act for another",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "AIRRIGHTS",
+      "text": "The right to use the space above the land",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "ALIENATION",
+      "text": "The transfer of title, or a clause that limits it",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "ALLEY",
+      "text": "A narrow way behind lots",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ALONG",
+      "text": "Following a boundary",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ALTA",
+      "text": "A title-insurance policy form, by its initials",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ALWAYS",
+      "text": "At all times",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "AMORTIZE",
+      "text": "To pay a loan down by regular installments",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "AMORTIZED",
+      "text": "Paid off by a schedule of principal and interest",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "ANGLE",
+      "text": "The turn between two survey lines",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ANNEXATION",
+      "text": "Attaching personal property so it becomes a fixture",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "ANY",
+      "text": "Whichever",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "APP",
+      "text": "Short for application",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "APPRAISAL",
+      "text": "A supported opinion of value",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "APPURTENANT",
+      "text": "An easement that benefits a neighboring parcel",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "APR",
+      "text": "The loan's yearly cost, including certain fees",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "APRON",
+      "text": "The paved approach to a garage or street",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "AREA",
+      "text": "Length times width, for a rectangle",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "ARM",
+      "text": "A loan whose rate can change",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "ARREARS",
+      "text": "An item paid after it is earned, such as mortgage interest",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "ASIS",
+      "text": "Sold without promises of repair, in four characters",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "ASK",
+      "text": "The seller's current price",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ASSESS",
+      "text": "To set a value for taxation",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "ASSESSING",
+      "text": "Setting values for the tax roll",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "ASSIGN",
+      "text": "To transfer contract rights to someone else",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "ATTIC",
+      "text": "The space under the roof",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "AVENUE",
+      "text": "A street type in a legal description",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "AZIMUTH",
+      "text": "A direction measured in degrees from north",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "BALLOON",
+      "text": "A loan with a large final payment",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "BARN",
+      "text": "A farm building",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BASE",
+      "text": "The line townships are counted from, briefly",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BASEMENT",
+      "text": "The level below the first floor",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BASIS",
+      "text": "An owner's cost for tax purposes",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "BATH",
+      "text": "A bathroom, in listing shorthand",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BEAM",
+      "text": "A structural support",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BEARING",
+      "text": "A survey direction",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "BEGIN",
+      "text": "The starting place in a metes-and-bounds description",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BEING",
+      "text": "A deed word that introduces a description",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "BENCHMARK",
+      "text": "A survey mark of known elevation",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "BENEFIT",
+      "text": "What an appurtenant easement gives the dominant estate",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "BERM",
+      "text": "A raised bank of earth",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BID",
+      "text": "An offer at an auction",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "BINDER",
+      "text": "Money or a short agreement that holds a deal together early",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "BLIND",
+      "text": "An ad that hides the broker's licensed identity",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "BLOCK",
+      "text": "A group of lots",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BLOCKBUSTING",
+      "text": "Pushing owners to sell by stirring fear about who is moving in",
+      "source": null,
+      "chapter": 18
+    },
+    {
+      "term": "BOARD",
+      "text": "The group that runs an association",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "BOG",
+      "text": "Wet ground",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BOOK",
+      "text": "A volume of land records",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "BORROW",
+      "text": "To take a loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "BOTH",
+      "text": "The two parties",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BOYCOTT",
+      "text": "A group refusal to deal, forbidden by antitrust law",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "BREACH",
+      "text": "A failure to perform a contract duty",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "BROKER",
+      "text": "The licensee who may operate independently and supervise others",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "BROOK",
+      "text": "A small stream",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "BUDGET",
+      "text": "The association's spending plan",
+      "source": null,
+      "chapter": 19
+    },
+    {
+      "term": "BUFFER",
+      "text": "Land left open to separate different uses",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "BURDEN",
+      "text": "What an easement puts on the servient estate",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "BUYER",
+      "text": "The person seeking to purchase",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "BYLAWS",
+      "text": "The internal rules of an association",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "CABIN",
+      "text": "A small dwelling",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CABLE",
+      "text": "A utility line",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CAFE",
+      "text": "A small restaurant",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CAP",
+      "text": "A limit on a rate, or the start of capitalization",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "CAPRATE",
+      "text": "Net operating income divided by value",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "CARPORT",
+      "text": "A roofed parking space without full walls",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CASH",
+      "text": "Money that is not a promise",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CAUSE",
+      "text": "The broker's effort that leads to the sale",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "CAVE",
+      "text": "A hollow, or the start of caveat",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CAVEAT",
+      "text": "A warning, as in caveat emptor",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "CEILING",
+      "text": "The highest a variable rate may go",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "CELLAR",
+      "text": "A basement",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CHAIN",
+      "text": "The sequence of past owners in a title search",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "CHATTEL",
+      "text": "An item of personal property",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "CHECK",
+      "text": "A written order to pay, risky as earnest money",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "CITY",
+      "text": "A larger municipality",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CLAY",
+      "text": "A soil that drains slowly",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CLEAN",
+      "text": "Free of problems",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CLEAR",
+      "text": "Title with no unacceptable defects",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "CLERK",
+      "text": "The town official who records deeds",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "CLIENT",
+      "text": "The person an agent represents",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "CLOSING",
+      "text": "The meeting where the deal is funded and title passes",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "CLOUD",
+      "text": "A claim or defect that makes title doubtful",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "CLOUDED",
+      "text": "Title with a defect or competing claim",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "CMA",
+      "text": "A broker's comparison of recent sales",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "COD",
+      "text": "Collect on delivery",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CODICIL",
+      "text": "An amendment to a will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "COMMINGLE",
+      "text": "To mix client funds with a licensee's own money",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "COMMON",
+      "text": "A tenancy that allows unequal shares and no survivorship",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "COMPARABLES",
+      "text": "Recent similar sales used to estimate value",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "COMPS",
+      "text": "Sales used as evidence of value",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "CONDEMN",
+      "text": "To take private land for public use with just compensation",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "CONDO",
+      "text": "A unit owned separately, with a share of the common elements",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "CONSTRUCTIVE",
+      "text": "Notice the law pretends you have because a document was recorded",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "CONVERSION",
+      "text": "Using trust funds as if they were your own",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "CONVEYANCE",
+      "text": "The transfer of real estate from one owner to another",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "COOP",
+      "text": "A building owned by a corporation, occupied by shareholders",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "CORN",
+      "text": "A crop",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "COST",
+      "text": "What you spend to build or buy",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "COUNTER",
+      "text": "A reply that changes the offer",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "COVENANT",
+      "text": "A promise in a deed or other real estate contract",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "COVENANTS",
+      "text": "Promises that run with a deed or a subdivision",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "COVERAGE",
+      "text": "The portion of a lot a building may cover",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "CRACK",
+      "text": "A split in a wall or foundation",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "CREDIT",
+      "text": "Money shown in someone's favor on a closing statement",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "CREEK",
+      "text": "A stream",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CROP",
+      "text": "A planting that may be an emblement",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "CURABLE",
+      "text": "A defect whose repair makes economic sense",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "CURB",
+      "text": "The edge of the street",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "CURTESY",
+      "text": "A surviving husband's historical estate",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "CUSTOMER",
+      "text": "A person an agent assists without representing",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "DATE",
+      "text": "When a document was signed or recorded",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "DEBIT",
+      "text": "A charge on a closing statement",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "DECK",
+      "text": "An exterior improvement",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "DEED",
+      "text": "The document that transfers title to real estate",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "DEFALCATE",
+      "text": "To embezzle money entrusted to you",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "DEFICIENCY",
+      "text": "The debt left after a foreclosure sale does not cover the loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "DENSITY",
+      "text": "How many units a zoning rule allows on the land",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "DEPRECIATE",
+      "text": "To lose value from age or wear",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "DEPTH",
+      "text": "How far a lot runs back from the front",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "DEVISE",
+      "text": "A gift of real property by will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "DIRT",
+      "text": "Land, in slang",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "DISPARATE",
+      "text": "A kind of impact that can be discriminatory even if a rule looks neutral",
+      "source": null,
+      "chapter": 18
+    },
+    {
+      "term": "DIVERSION",
+      "text": "Turning trust funds aside for a personal use",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "DOCK",
+      "text": "A structure for boats",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "DOMAIN",
+      "text": "The public-use side of eminent domain",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "DOMINANT",
+      "text": "The estate that benefits from an appurtenant easement",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "DOOR",
+      "text": "The way in",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "DOWER",
+      "text": "A surviving spouse's historical interest in land",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "DRAIN",
+      "text": "A way water leaves",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "DRIVE",
+      "text": "A private roadway on a lot",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "DTI",
+      "text": "Debt payments compared with income",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "DUAL",
+      "text": "Acting for both parties",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "DUALAGENT",
+      "text": "One licensee assisting both parties in the same deal",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "DUES",
+      "text": "Regular association charges",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "EARNEST",
+      "text": "Deposit that shows a buyer is serious",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "EARNESTMONEY",
+      "text": "The buyer's good-faith deposit, in two words",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "EASEMENT",
+      "text": "A right to use part of someone else's land",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "EAST",
+      "text": "A cardinal direction",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ECOA",
+      "text": "The federal law against credit discrimination",
+      "source": null,
+      "chapter": 18
+    },
+    {
+      "term": "EIGHTEEN",
+      "text": "The minimum age DCP lists for a salesperson applicant, spelled out",
+      "source": {
+        "label": "CT DCP, Real Estate Salesperson \u2014 Initial/Exam",
+        "url": "https://portal.ct.gov/dcp/license-services-division/all-license-applications/real-estate-salesperson---initialexam"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "EIGHTY",
+      "text": "The Connecticut salesperson application fee to be admitted to the exam, in dollars, spelled out",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-314",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-314"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "EMBLEMENTS",
+      "text": "Crops that a tenant may return to harvest",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "EMINENT",
+      "text": "The power behind a taking for public use",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "EMIT",
+      "text": "To give off",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "EMPTOR",
+      "text": "The buyer in the phrase caveat emptor",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "ENCUMBER",
+      "text": "To place a lien, easement, or other burden on title",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "EQUAL",
+      "text": "The same",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "EQUITY",
+      "text": "The owner's interest above the liens",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "ESCHEAT",
+      "text": "The state's taking of property when no heir can be found",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "ESCHEATED",
+      "text": "Taken by the state because no heir could be found",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "ESCROW",
+      "text": "Money a neutral party holds until the deal closes",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "ESCROWED",
+      "text": "Placed into a trust account",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "ESTATE",
+      "text": "An interest in real property",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "ESTIMATED",
+      "text": "Given an approximate value",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "ETA",
+      "text": "When you expect to arrive",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "EVICTION",
+      "text": "The legal removal of a tenant",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "EXEMPTION",
+      "text": "A statutory exception to a rule",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "EXTERNAL",
+      "text": "Obsolescence caused by something outside the property",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "FAQ",
+      "text": "Questions everyone asks",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FARM",
+      "text": "Agricultural land",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FASCIA",
+      "text": "The board along a roof edge",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FEE",
+      "text": "An inheritable freehold estate",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "FEESIMPLE",
+      "text": "The broadest private ownership of land",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "FEMA",
+      "text": "The agency behind flood maps",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "FENCE",
+      "text": "A possible encroachment",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "FHA",
+      "text": "A federal mortgage-insurance program",
+      "source": null,
+      "chapter": 13
+    },
+    {
+      "term": "FIDUCIARY",
+      "text": "A duty of loyalty and care owed to a client",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "FIFTEEN",
+      "text": "The years of uninterrupted adverse use required for a Connecticut prescriptive easement",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 47-37",
+        "url": "https://www.cga.ct.gov/current/pub/chap_822.htm#sec_47-37"
+      },
+      "chapter": 3
+    },
+    {
+      "term": "FILL",
+      "text": "Soil added to a site",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FINE",
+      "text": "A penalty an association or a license law may impose",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "FIVE",
+      "text": "A handful",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FIVETHOUSAND",
+      "text": "The maximum Connecticut license fine per violation, in dollars, as one word",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-320",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-320"
+      },
+      "chapter": 8
+    },
+    {
+      "term": "FIXTURE",
+      "text": "Personal property that has become part of the real estate",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "FLOOD",
+      "text": "The zone that can change insurance and loan rules",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "FLUE",
+      "text": "A chimney passage",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FOOT",
+      "text": "Twelve inches",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FORECLOSE",
+      "text": "To enforce a lien by forcing a sale",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "FOUR",
+      "text": "The number of unities in a joint tenancy",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FREEHOLD",
+      "text": "An ownership estate of uncertain duration",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "FREEHOLDS",
+      "text": "Ownership estates, as opposed to leaseholds",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "FRONTAGE",
+      "text": "The length of a lot along a street or water",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "FRONTFOOT",
+      "text": "A lot's street frontage, as one word",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "FRUCTUS",
+      "text": "Crops, in the Latin property phrases",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "FULL",
+      "text": "Complete",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "FUNCTIONAL",
+      "text": "Obsolescence from a poor design, not from age alone",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "FUNDS",
+      "text": "Money available to close",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "FURLONG",
+      "text": "A distance of 40 rods",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "GARAGE",
+      "text": "A car shelter",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "GRADE",
+      "text": "The slope of land",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "GRANTEE",
+      "text": "The person who receives title by deed",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "GRANTOR",
+      "text": "The person who transfers title by deed",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "GRASS",
+      "text": "A lawn",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "GREEN",
+      "text": "Building practices that can affect value",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "GRM",
+      "text": "Price divided by gross rent",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "GROSS",
+      "text": "A lease in which the landlord pays the operating expenses",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "GROSSRENT",
+      "text": "Income before vacancy and expenses, in two squeezed words",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "GROUND",
+      "text": "A long lease of land, often for the tenant to build",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "GUARANTOR",
+      "text": "A person who promises to pay if the borrower does not",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "GUTTER",
+      "text": "A channel for roof water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "HABENDUM",
+      "text": "The deed clause that begins \"to have and to hold\"",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "HALF",
+      "text": "Fifty percent",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "HAZARD",
+      "text": "Insurance against fire and similar damage",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "HEARTH",
+      "text": "A fireplace floor",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "HECTARE",
+      "text": "A metric land measure of 10,000 square meters",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "HEDGE",
+      "text": "A living fence",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "HEIGHT",
+      "text": "A zoning limit on how tall a building may be",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "HEIR",
+      "text": "A person who inherits under a statute",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "HEREDITAMENT",
+      "text": "Any property that can be inherited",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "HMDA",
+      "text": "The federal mortgage-data law",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "HOA",
+      "text": "The owners' association, for short",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "HOLDOVER",
+      "text": "A tenant who remains after the lease ends",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "HOME",
+      "text": "A dwelling",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "HOSTILE",
+      "text": "Possession without the owner's permission",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "HOUR",
+      "text": "Sixty minutes",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "HUD",
+      "text": "The federal housing department, by its initials",
+      "source": null,
+      "chapter": 13
+    },
+    {
+      "term": "HVAC",
+      "text": "Heating and cooling, as four letters",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "IMPLIED",
+      "text": "An easement or agency the law infers from conduct",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "INCURABLE",
+      "text": "A defect that costs more to fix than it returns",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "INDEX",
+      "text": "The outside rate an adjustable loan follows",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "INQUIRY",
+      "text": "Notice that would come from asking an obvious question",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "INTEND",
+      "text": "What the parties meant, in a fixture dispute",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "INTEREST",
+      "text": "A unity, and also the cost of borrowing",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "INTESTATE",
+      "text": "Dying without a valid will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "JOINT",
+      "text": "A tenancy with survivorship",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "JOIST",
+      "text": "A floor or ceiling beam",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "JUNIOR",
+      "text": "A lien that gets paid after an earlier one",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "KEYS",
+      "text": "What changes hands with possession",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "KICKBACK",
+      "text": "An illegal payment for a settlement referral",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "KNOWN",
+      "text": "Identified, as a lot on a recorded map",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "LAKE",
+      "text": "A larger inland water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LAND",
+      "text": "Real property's foundation",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "LATENT",
+      "text": "A defect that is hidden and not easily discovered",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "LATER",
+      "text": "After now",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LEACH",
+      "text": "What a septic field does with water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LEAD",
+      "text": "The paint hazard in much older housing",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "LEAK",
+      "text": "An escape of water",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "LEASE",
+      "text": "A contract that transfers possession, not ownership",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "LEASEHOLD",
+      "text": "The tenant's estate in the property",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "LEGACY",
+      "text": "A gift of personal property by will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "LENDER",
+      "text": "The one who advances the loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "LENGTH",
+      "text": "The long measure",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "LESS",
+      "text": "The other half of \"more or less\"",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LESSEE",
+      "text": "The tenant under a lease",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "LESSOR",
+      "text": "The landlord under a lease",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "LEVEL",
+      "text": "Flat",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LEVERAGE",
+      "text": "Using borrowed money to buy more property",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "LIEN",
+      "text": "A claim that attaches to title as security for a debt",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "LIFE",
+      "text": "The measuring stick of a life estate",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "LIFEESTATE",
+      "text": "Ownership limited to someone's lifetime",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "LIGHT",
+      "text": "Illumination, or an old easement of light",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "LINK",
+      "text": "A hundredth of a survey chain",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "LIQUID",
+      "text": "Assets that can be turned into cash quickly",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "LISPENDENS",
+      "text": "Recorded notice that a property is in litigation",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "LISTING",
+      "text": "A broker's agreement to market a property",
+      "source": null,
+      "chapter": 10
+    },
+    {
+      "term": "LOAM",
+      "text": "Rich soil",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LOAN",
+      "text": "Money advanced to be repaid",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "LOBBY",
+      "text": "A building entrance hall",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LOCK",
+      "text": "A keybox, briefly",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LOT",
+      "text": "A single parcel in a subdivision",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "LOTNO",
+      "text": "A lot number, squeezed together",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LOW",
+      "text": "Under the asking price",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "LTV",
+      "text": "Loan amount compared with value",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "MALL",
+      "text": "A shopping center",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "MANOR",
+      "text": "A large house",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "MAP",
+      "text": "A plat, less formally",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "MARGIN",
+      "text": "The lender's add-on above an index",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "MARKET",
+      "text": "The place where buyers and sellers meet, or a value based on it",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "MARKETABLE",
+      "text": "Title a reasonable buyer would accept",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "MECHANICS",
+      "text": "A lien for unpaid work or materials on real estate",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "METER",
+      "text": "A utility measuring device",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "METES",
+      "text": "The distances and directions in a survey description",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "METHOD",
+      "text": "How an item was attached, in a fixture test",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "MILE",
+      "text": "5,280 feet",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "MINUTES",
+      "text": "The written record of a meeting",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "MLS",
+      "text": "A shared listing database",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "MOLD",
+      "text": "A moisture problem buyers and inspectors look for",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "MONTH",
+      "text": "A rent period",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "MONUMENTS",
+      "text": "Physical markers used in a legal description",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "MORE",
+      "text": "Extra, as in \"more or less\"",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "MORTGAGE",
+      "text": "A pledge of real estate as security for a loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "MORTGAGEE",
+      "text": "The lender who holds a mortgage",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "MORTGAGOR",
+      "text": "The borrower who gives a mortgage",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "NATURAL",
+      "text": "Emblements are not the ___ crops that grow without annual labor",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "NAVIGABLE",
+      "text": "Waters the public may use for travel",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "NECESSITY",
+      "text": "An easement required because a parcel would otherwise be landlocked",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "NET",
+      "text": "A lease in which the tenant pays some ownership expenses",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "NETLISTING",
+      "text": "A listing in which the broker keeps everything above a set price",
+      "source": {
+        "label": "Regs. Conn. State Agencies \u00a7 20-328-6a",
+        "url": "https://eregulations.ct.gov/eRegsPortal/Browse/getDocument?guid={600C4895-0000-C737-BB27-7C13924592E0}"
+      },
+      "chapter": 10
+    },
+    {
+      "term": "NINE",
+      "text": "A digit",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "NOI",
+      "text": "Income left after operating expenses",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "NOISE",
+      "text": "Sound",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "NONE",
+      "text": "Zero",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "NORTH",
+      "text": "A cardinal direction on a survey",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "NOTE",
+      "text": "The borrower's promise to pay",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "NOTORIOUS",
+      "text": "Possession open enough that the owner could notice",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "NOVATION",
+      "text": "Replacing a contract or party with a new obligation",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "OBEDIENCE",
+      "text": "An agent's duty to follow lawful instructions",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "ODD",
+      "text": "Not even, or a strange exception",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ODOR",
+      "text": "A smell that can be a material clue",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "OFFER",
+      "text": "A proposal that can become a contract if accepted",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "OFFEREE",
+      "text": "The person who receives an offer",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "OFFEROR",
+      "text": "The person who makes an offer",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "ONE",
+      "text": "A single",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "OPEN",
+      "text": "A house event the public may attend",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "OPINION",
+      "text": "What title insurance relies on a search to support",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "OPTION",
+      "text": "A contract right to buy during a set time, without a duty to buy",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "ORAL",
+      "text": "Spoken, not written",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ORDINANCE",
+      "text": "A local law, such as a zoning code",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "OWN",
+      "text": "To hold title",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "OWNER",
+      "text": "The person who holds title",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "PAGE",
+      "text": "The place in the land records",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "PANEL",
+      "text": "An electrical box",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PARK",
+      "text": "To leave the car, or a public green",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PAROL",
+      "text": "Oral evidence, as opposed to the written contract",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "PARTITION",
+      "text": "A court split of co-owned property",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "PATENT",
+      "text": "A defect that is visible on an ordinary inspection",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "PATIO",
+      "text": "An outdoor paved area",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PAY",
+      "text": "To satisfy a debt",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PDF",
+      "text": "A document file buyers actually open",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PER",
+      "text": "For each",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PERC",
+      "text": "A soil test for septic suitability",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PERCENT",
+      "text": "A lease rent based on sales",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "PERIODIC",
+      "text": "A tenancy that renews from period to period",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "PERMIT",
+      "text": "Official permission to build or occupy",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "PERSONALTY",
+      "text": "Personal property",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "PHASE",
+      "text": "A section of a larger development",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PIER",
+      "text": "A platform over water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PIN",
+      "text": "A parcel identification number, briefly",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PIPE",
+      "text": "A tube for water or gas",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PITI",
+      "text": "Principal, interest, taxes, and insurance",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "PLAT",
+      "text": "A map of a subdivision",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "PLOT",
+      "text": "A lot, or to chart a course",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PMI",
+      "text": "Private mortgage insurance",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "POCKET",
+      "text": "A listing kept out of the broader market",
+      "source": null,
+      "chapter": 10
+    },
+    {
+      "term": "POINT",
+      "text": "A place where a boundary begins, or a loan charge",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "POINTS",
+      "text": "Prepaid interest charged as a percent of the loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "POLICE",
+      "text": "The government power to regulate for health and safety",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "POND",
+      "text": "A small body of water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "POOL",
+      "text": "A water feature that can matter to value and insurance",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PORCH",
+      "text": "A covered entrance",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "POWER",
+      "text": "Authority to act",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "PREMIUM",
+      "text": "The price of an insurance policy",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "PREPAID",
+      "text": "An item paid ahead, credited at closing",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "PRESCRIPTIVE",
+      "text": "An easement claimed through long adverse use",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "PRICE",
+      "text": "What the seller hopes, until the market answers",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "PRINCIPAL",
+      "text": "The unpaid amount of a loan, or a person who hires an agent",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "PRIOR",
+      "text": "Earlier",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PRIORITY",
+      "text": "The order in which liens get paid",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "PROBATE",
+      "text": "The court process that settles a decedent's estate",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "PRORATE",
+      "text": "To divide an expense by time between the parties",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "PRORATION",
+      "text": "The time-based split of an expense at closing",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "PROXY",
+      "text": "Authority to vote for someone else",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "PUFF",
+      "text": "Exaggerated praise that is not a factual promise",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "PUFFING",
+      "text": "Sales talk that a reasonable person would not take as fact",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "PUMP",
+      "text": "A machine that moves water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "PUR",
+      "text": "The Latin bit in pur autre vie",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "QUIET",
+      "text": "A lawsuit brought to remove a cloud on title",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "QUITCLAIM",
+      "text": "A deed that transfers whatever interest the grantor has, with no warranties",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "QUORUM",
+      "text": "The number who must be present to vote",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "RADON",
+      "text": "A gas that can enter from the soil",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "RAFTER",
+      "text": "A sloping roof beam",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "RANCH",
+      "text": "A livestock property, or a house style",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "RANGE",
+      "text": "A column of townships east or west of a meridian",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "RATE",
+      "text": "The price of the loan, as a percent",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "READY",
+      "text": "One of the three words in a buyer who can complete the purchase",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "REALTY",
+      "text": "A short word for real property",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "REDEMPTION",
+      "text": "The right to reclaim property by paying what is owed",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "REDLINING",
+      "text": "Refusing housing services in an area because of who lives there",
+      "source": null,
+      "chapter": 18
+    },
+    {
+      "term": "REF",
+      "text": "A referral, briefly",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "REJECT",
+      "text": "To turn an offer down",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "RELATION",
+      "text": "The parties' connection, which can decide a fixture",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "RELICTION",
+      "text": "Land uncovered when water recedes permanently",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "REMAINDER",
+      "text": "A future estate that follows a life estate",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "REMEDY",
+      "text": "The cure a court or contract gives for a breach",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "RENT",
+      "text": "The price of possession",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "REPAYMENT",
+      "text": "Paying back the principal of a loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "REPLACEMENT",
+      "text": "The cost to build a similar utility with modern materials",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "REPRODUCTION",
+      "text": "The cost to build an exact replica",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "RESPA",
+      "text": "The federal law against settlement kickbacks",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "REVERSION",
+      "text": "A future estate that returns to the grantor",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "REVOKE",
+      "text": "To take an offer back before it is accepted",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "RIDE",
+      "text": "A trip between appointments",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "RIPARIAN",
+      "text": "Rights that come with land beside flowing water",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "RIVER",
+      "text": "Flowing water that can create riparian rights",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "ROAD",
+      "text": "The way from town to town",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ROCK",
+      "text": "Stone",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ROD",
+      "text": "A survey unit of 16.5 feet",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "RODS",
+      "text": "Survey units of 16.5 feet",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "ROOF",
+      "text": "The inspection item everyone asks about",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "ROOM",
+      "text": "An interior space",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "RULE",
+      "text": "A bylaw or a license restriction",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "RUNWITH",
+      "text": "A covenant that stays with the land, squeezed together",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "RURAL",
+      "text": "A location outside the city",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "RUST",
+      "text": "Oxidation",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SAID",
+      "text": "Already mentioned, in deed language",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "SAND",
+      "text": "Fine mineral",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SCHOOL",
+      "text": "A district buyers ask about",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SEAL",
+      "text": "An old formality on an instrument",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SECTION",
+      "text": "A square mile in the rectangular survey, about 640 acres",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "SEISIN",
+      "text": "The covenant that the grantor actually owns the estate",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "SELLER",
+      "text": "The owner offering property for sale",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "SENIOR",
+      "text": "A lien with higher priority than later ones",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "SEPTIC",
+      "text": "An on-site wastewater system",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "SERVIENT",
+      "text": "The estate burdened by an easement",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "SETBACK",
+      "text": "The required distance between a building and the lot line",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "SEVEN",
+      "text": "The minimum years of Connecticut record retention after closing, disbursement, or expiration, spelled out",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-325m",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-325m"
+      },
+      "chapter": 8
+    },
+    {
+      "term": "SEVENTY",
+      "text": "The Connecticut salesperson exam passing score, spelled out",
+      "source": {
+        "label": "PSI CT Real Estate Candidate Information Bulletin (updated Nov. 13, 2025)",
+        "url": "https://test-takers.psiexams.com/ctre"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "SEVER",
+      "text": "To end a joint tenancy as to someone's share",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "SEVERALTY",
+      "text": "Ownership by one person alone",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "SEVERANCE",
+      "text": "Removing a fixture so it is personal property again",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "SEWER",
+      "text": "A public wastewater line",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SHARE",
+      "text": "A co-owner's fraction",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "SHED",
+      "text": "An outbuilding",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SHOP",
+      "text": "A store",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SHORE",
+      "text": "The land along water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SHORTSALE",
+      "text": "A sale for less than the mortgage balance, with the lender's approval",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "SHOW",
+      "text": "To tour a property with a buyer",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SIGN",
+      "text": "The board in the yard",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SILO",
+      "text": "A farm storage tower",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SITE",
+      "text": "The land where a building sits",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SITUS",
+      "text": "The location of the land for tax and legal purposes",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "SIX",
+      "text": "A half dozen",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SIXTY",
+      "text": "The minimum classroom hours of principles and practice before the Connecticut salesperson exam",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-314",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-314"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "SLIP",
+      "text": "A boat's parking spot",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SLOPE",
+      "text": "Incline",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SMELL",
+      "text": "Odor",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "SOFFIT",
+      "text": "The underside of an eave",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SOIL",
+      "text": "Earth",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SOLAR",
+      "text": "Energy equipment that raises fixture questions",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "SOME",
+      "text": "A partial interest",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SOON",
+      "text": "Coming ___, a listing phrase that is still advertising",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SOUTH",
+      "text": "The opposite of north on a survey",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SPLIT",
+      "text": "How two brokers divide one commission",
+      "source": null,
+      "chapter": 8
+    },
+    {
+      "term": "SQUARE",
+      "text": "A shape, or the word before footage",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "STAIR",
+      "text": "A stepway",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "STAMP",
+      "text": "What the recording office puts on a deed",
+      "source": null,
+      "chapter": 7
+    },
+    {
+      "term": "STEERING",
+      "text": "Guiding buyers toward or away from an area because of a protected class",
+      "source": null,
+      "chapter": 18
+    },
+    {
+      "term": "STIGMA",
+      "text": "A nonphysical history that some buyers mind and the law may not require disclosing",
+      "source": null,
+      "chapter": 21
+    },
+    {
+      "term": "STORE",
+      "text": "A shop",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "STREET",
+      "text": "A public way",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "STUD",
+      "text": "A wall framing member",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "STUMP",
+      "text": "What is left after a tree is cut",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SUBAGENCY",
+      "text": "An agency relationship under another agent",
+      "source": null,
+      "chapter": 9
+    },
+    {
+      "term": "SUBSURFACE",
+      "text": "Rights to minerals and other materials below the surface",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "SUBURB",
+      "text": "A residential area near a city",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SUFFER",
+      "text": "A tenancy at ___ , when a holdover stays without permission",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "SUMP",
+      "text": "A pit for collecting water",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "SURVEY",
+      "text": "A measurement of land and its improvements",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "SURVEYING",
+      "text": "Measuring land boundaries and features",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "SURVIVE",
+      "text": "To take a co-owner's share at death under joint tenancy",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "SWALE",
+      "text": "A shallow drainage channel",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TACKING",
+      "text": "Adding a prior owner's adverse time to your own",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "TAX",
+      "text": "A government charge on property",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "TEASER",
+      "text": "A low introductory rate that will not last",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "TEN",
+      "text": "A decade of units",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TENANT",
+      "text": "A person who occupies under a lease",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "TERM",
+      "text": "The length of a loan",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "TESTAMENT",
+      "text": "A will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "TESTATOR",
+      "text": "A person who dies leaving a valid will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "TESTATRIX",
+      "text": "A woman who dies leaving a valid will",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "THENCE",
+      "text": "The survey word that means \"from there\"",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "THIRD",
+      "text": "One of three",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "THREE",
+      "text": "The banking days a Connecticut broker has to deposit trust money after all parties sign",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-324k",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-324k"
+      },
+      "chapter": 8
+    },
+    {
+      "term": "TIDAL",
+      "text": "Affected by tides",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TIER",
+      "text": "A row of townships north or south of a baseline",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TILA",
+      "text": "The federal truth-in-lending law",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "TIME",
+      "text": "One of the four unities",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TITLE",
+      "text": "The right to own real estate, and the evidence of it",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "TOUR",
+      "text": "A broker's caravan of listings",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TOWER",
+      "text": "A tall structure",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TOWN",
+      "text": "A municipality",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TOWNSHIP",
+      "text": "A six-mile square in the government survey",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "TRADE",
+      "text": "A ___ fixture, removable by a commercial tenant",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "TRAFFIC",
+      "text": "Cars, which can affect value",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "TREE",
+      "text": "A possible natural monument",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "TRID",
+      "text": "The integrated loan-disclosure rule, by its nickname",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "TRUSTEE",
+      "text": "A person who holds title for someone else",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "TRUSTOR",
+      "text": "The borrower under a deed of trust",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "TWELVE",
+      "text": "The minimum continuing-education hours in a Connecticut two-year cycle, spelled out",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-319",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-319"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "TWENTY",
+      "text": "The one-time Real Estate Guaranty Fund fee, in dollars, spelled out",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-324b",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-324b"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "TWENTYFIVE",
+      "text": "The affiliation-transfer fee for a Connecticut salesperson, in dollars, as one word",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 20-319a",
+        "url": "https://www.cga.ct.gov/current/pub/chap_392.htm#sec_20-319a"
+      },
+      "chapter": 1
+    },
+    {
+      "term": "TWENTYONE",
+      "text": "Days after termination in one prong of Connecticut's security-deposit return rule",
+      "source": {
+        "label": "Conn. Gen. Stat. \u00a7 47a-21",
+        "url": "https://www.cga.ct.gov/current/pub/chap_831.htm#sec_47a-21"
+      },
+      "chapter": 17
+    },
+    {
+      "term": "TWO",
+      "text": "A pair",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "UNDER",
+      "text": "Below",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "UNEQUAL",
+      "text": "Not the same size",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "UNIT",
+      "text": "One condo or one dwelling",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "UNITY",
+      "text": "One of the four requirements of a joint tenancy",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "URBAN",
+      "text": "A location type",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "USE",
+      "text": "What the zoning ordinance cares about first",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "USPAP",
+      "text": "Appraisal standards, by their initials",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "USURY",
+      "text": "Illegally high interest",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "VALID",
+      "text": "A contract that the law will enforce",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "VALUATION",
+      "text": "The process of estimating what property is worth",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "VALUE",
+      "text": "What it is worth, which may not be the price",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "VARIANCE",
+      "text": "Permission to break a zoning rule in a specific case",
+      "source": null,
+      "chapter": 20
+    },
+    {
+      "term": "VENDEE",
+      "text": "The buyer, in older deed language",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "VENDOR",
+      "text": "The seller, in older deed language",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "VENT",
+      "text": "An air opening",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "VIE",
+      "text": "Life, in the phrase pur autre vie",
+      "source": null,
+      "chapter": 3
+    },
+    {
+      "term": "VIEW",
+      "text": "A scene, which is not itself a property right unless granted",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "VILLA",
+      "text": "A house style",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "VOID",
+      "text": "A contract with no legal effect",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "VOLUME",
+      "text": "The space inside a three-dimensional shape",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "VOLUNTARY",
+      "text": "A lien the owner agreed to, such as a mortgage",
+      "source": null,
+      "chapter": 15
+    },
+    {
+      "term": "VOTE",
+      "text": "What an association member casts",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "WAIVE",
+      "text": "To give up a known right",
+      "source": null,
+      "chapter": 11
+    },
+    {
+      "term": "WALK",
+      "text": "A sidewalk",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "WARRANTY",
+      "text": "A deed promise that the title is good",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "WASTE",
+      "text": "Damage by a tenant that hurts the property's value",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "WATER",
+      "text": "A utility, or the source of riparian rights",
+      "source": null,
+      "chapter": 2
+    },
+    {
+      "term": "WEEK",
+      "text": "Seven days",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "WELL",
+      "text": "A private water source",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "WEST",
+      "text": "A cardinal direction",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "WHEAT",
+      "text": "A grain crop",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "WHOLE",
+      "text": "The right of survivorship, in a phrase: the survivor takes the ___",
+      "source": null,
+      "chapter": 4
+    },
+    {
+      "term": "WIDTH",
+      "text": "The side-to-side measure",
+      "source": null,
+      "chapter": 5
+    },
+    {
+      "term": "WILL",
+      "text": "A testament",
+      "source": null,
+      "chapter": 6
+    },
+    {
+      "term": "WILLING",
+      "text": "A buyer who actually wants to go through with the deal",
+      "source": null,
+      "chapter": 12
+    },
+    {
+      "term": "WIRE",
+      "text": "How closing funds often move",
+      "source": null,
+      "chapter": 14
+    },
+    {
+      "term": "WORTH",
+      "text": "Value, in plainer speech",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "YARD",
+      "text": "The land around a house",
+      "source": null,
+      "chapter": null
+    },
+    {
+      "term": "YEAR",
+      "text": "Twelve months, or a lease term",
+      "source": null,
+      "chapter": 17
+    },
+    {
+      "term": "YIELD",
+      "text": "The investor's return",
+      "source": null,
+      "chapter": 16
+    },
+    {
+      "term": "ZONING",
+      "text": "Public rules that divide land by use",
+      "source": null,
+      "chapter": 20
+    }
+  ]
+}
