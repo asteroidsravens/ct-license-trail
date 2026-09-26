@@ -36,6 +36,17 @@ python3 -m http.server 8080
 
 Then open `http://127.0.0.1:8080/`.
 
+## Run in Docker
+
+The same static files can run in a container. The image is the official `nginx:1.27-alpine` image. nginx is not copied into this repository. It only serves the pages, styles, scripts, and data already in the tree.
+
+```bash
+docker build -t ct-license-trail .
+docker run --rm -p 8080:80 ct-license-trail
+```
+
+Then open `http://127.0.0.1:8080/`. Progress still stays in that browser. The container does not send answers anywhere.
+
 Check the game rules, the bank, and the crossword library:
 
 ```bash
