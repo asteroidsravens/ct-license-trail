@@ -3,6 +3,7 @@ import {
   masteryPercent, answerQuestion, dueReviews, pickQuestions, sampleExam, recordExam,
   roadTopics, puzzleForDate, awardCrossword, completedChapters,
   themeId, displayStem, ctLawEventsForStop, THEMES,
+  EXAM_SHAPE, portionReadiness, hydratePortions, chapterStudyPlan,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -35,6 +36,8 @@ function loadState() {
       settings: { sound: false, ...(saved.settings || {}) },
       streak: { ...fresh.streak, ...(saved.streak || {}) },
       stats: { ...fresh.stats, ...(saved.stats || {}) },
+      portions: saved.portions || fresh.portions,
+      chapterLoops: { ...(saved.chapterLoops || {}) },
       crossword: {
         streak: { ...fresh.crossword.streak, ...(saved.crossword?.streak || {}) },
         solved: { ...(saved.crossword?.solved || {}) },
@@ -93,7 +96,7 @@ function paintChrome() {
     const tab = button.dataset.tab;
     const quizKind = state.session?.kind;
     const on = (tab === "home" && (screen === "home" || (screen === "question" && quizKind !== "math" && quizKind !== "review")))
-      || (tab === "map" && screen === "map")
+      || (tab === "map" && (screen === "map" || screen === "loop"))
       || (tab === "math" && (screen === "math" || (screen === "question" && quizKind === "math")))
       || (tab === "exam" && ["exam", "mock"].includes(screen))
       || (tab === "review" && (screen === "review" || (screen === "question" && quizKind === "review")))
@@ -208,6 +211,7 @@ function render() {
     math: viewMathHome,
     mathrun: viewQuestion,
     exam: viewExamHome,
+    loop: viewLoop,
     mock: viewMock,
     review: viewReviewHome,
     settings: viewSettings,
@@ -239,6 +243,7 @@ function viewHome() {
       <div class="stack">
         ${resumeMock ? `<button class="btn btn-primary" data-act="resume-mock">Resume mock exam</button>` : ""}
         <button class="btn btn-primary" data-act="continue" ${!resumeQuiz && !town ? "disabled" : ""}>${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
+        <button class="btn btn-pine" data-act="study-list">Study a chapter</button>
         <button class="btn btn-quiet" data-act="daily">${dailyHomeLabel()}</button>
         <button class="btn btn-quiet" data-act="settings">Chapters, exam date, and sound</button>
       </div>
@@ -262,7 +267,8 @@ function viewHome() {
       <p>${esc(dateLine)}</p>
       <p>${due ? `${due} missed question${due === 1 ? "" : "s"} ready for another look.` : "The review pile is clear."}</p>
     </section>
-    <p class="fine">Unofficial study aid for the Connecticut salesperson exam. Not affiliated with PSI or the Department of Consumer Protection.</p>`;
+      <p class="fine">Unofficial study aid for the Connecticut salesperson exam. Not affiliated with PSI or the Department of Consumer Protection.</p>
+    ${readinessCard()}`;
 }
 
 function viewQuestion() {
@@ -275,7 +281,14 @@ function viewQuestion() {
   const topic = topicById(question.topic);
   const answered = session.phase === "explain";
   const keys = ["1", "2", "3", "4"];
-  const where = session.kind === "review" ? "Review" : session.kind === "math" ? "Math Pass" : topic.town;
+  const where = session.kind === "review" ? "Review"
+    : session.kind === "math" ? "Math Pass"
+    : session.kind === "chapter-principles" ? "Principles and practices"
+    : session.kind === "chapter-ct" ? "Connecticut law"
+    : session.kind === "chapter-quiz" ? "Chapter quiz"
+    : topic?.town || "Chapter";
+  const quizMode = session.kind === "chapter-quiz";
+  const quizChoice = quizMode ? session.answers?.[question.id] : null;
   const chapterBit = question.chapter ? chapterTitle(question.chapter) : "";
   const lawBadge = question.ctLaw ? `<span class="badge-ct">CT Law</span>` : "";
   main.innerHTML = `
@@ -285,19 +298,21 @@ function viewQuestion() {
       <div class="stack" role="group" aria-labelledby="stem">
         ${question.choices.map((choice, index) => {
           let cls = "choice";
-          if (answered && index === question.answer) cls += " good";
-          else if (answered && index === session.choice && index !== question.answer) cls += " bad";
-          return `<button class="${cls}" data-choice="${index}" ${answered ? "disabled" : ""}>
+          if (quizMode && quizChoice === index) cls += " picked";
+          if (!quizMode && answered && index === question.answer) cls += " good";
+          else if (!quizMode && answered && index === session.choice && index !== question.answer) cls += " bad";
+          return `<button class="${cls}" data-choice="${index}" ${!quizMode && answered ? "disabled" : ""}>
             <span class="key" aria-hidden="true">${keys[index]}</span>
             <span>${esc(choice)}</span>
           </button>`;
         }).join("")}
       </div>
-      ${answered ? explainBlock(question, session.choice) : ""}
+      ${!quizMode && answered ? explainBlock(question, session.choice) : ""}
       ${session.note ? `<div class="note">${esc(session.note)}</div>` : ""}
       <div class="dock">
         ${question.math ? `<button class="btn btn-quiet" data-act="calc">Calculator</button>` : ""}
-        ${answered ? `<button class="btn btn-primary" data-act="next-q">${session.index + 1 >= session.ids.length ? "Finish this stop" : "Next question"}</button>` : ""}
+        ${quizMode ? `<button class="btn btn-primary" data-act="quiz-next">${session.index + 1 >= session.ids.length ? "Finish quiz" : "Next question"}</button>` : ""}
+        ${!quizMode && answered ? `<button class="btn btn-primary" data-act="next-q">${session.index + 1 >= session.ids.length ? "Finish this step" : "Next question"}</button>` : ""}
         <button class="btn btn-quiet" data-act="park">Park and save</button>
       </div>
     </article>`;
@@ -321,10 +336,29 @@ function explainBlock(question, choice) {
   </section>`;
 }
 
+function readinessCard() {
+  const rows = portionReadiness(state);
+  return `
+    <section class="card">
+      <h2>Progress</h2>
+      <p class="lede">The salesperson exam is two sittings. The ${EXAM_SHAPE.bulletin} lists ${EXAM_SHAPE.nationalCount} general questions in ${EXAM_SHAPE.nationalMinutes} minutes and ${EXAM_SHAPE.stateCount} Connecticut questions in ${EXAM_SHAPE.stateMinutes} minutes. Each portion needs ${EXAM_SHAPE.passingPercent}%.</p>
+      <div class="meters">
+        ${rows.map((row) => `
+          <div class="supply">
+            <strong>${esc(row.label)}</strong>
+            <span class="muted">${row.correct}/${row.seen || 0} · ${row.percent}% · ${esc(row.status)}</span>
+            <div class="bar" aria-hidden="true"><span style="width:${row.seen ? row.percent : 0}%"></span></div>
+            <span class="muted">Bulletin: ${row.count} questions, ${row.minutes} minutes. ${row.status === "Early" ? "Ten answers before this reads as a pace." : row.status === "On pace" ? "Recent answers are at or above 70%." : row.status === "Below the line" ? "Recent answers are under 70%." : "No answers in this portion yet."}</span>
+          </div>`).join("")}
+      </div>
+    </section>`;
+}
+
 function viewMap() {
   const road = openRoad();
   const mathCount = bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).length;
   main.innerHTML = `
+    ${readinessCard()}
     <section class="card">
       <h2>The road</h2>
       <p class="lede">Towns with questions in the chapters you've completed. The suggested stop is marked.</p>
@@ -346,6 +380,9 @@ function viewMap() {
           <span class="dot" aria-hidden="true"></span>
           <span><strong>Waterbury</strong> · Math Pass<span class="muted" style="display:block">${mathCount ? `${mathCount} drills in your completed chapters.` : "No math drills in the chapters you've completed."}</span></span>
         </button>
+      </div>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn btn-pine" data-act="study-list">Study a chapter</button>
       </div>
     </section>`;
 }
@@ -382,14 +419,14 @@ function viewExamHome() {
   main.innerHTML = `
     <section class="card">
       <h2>Mock exam</h2>
-      <p class="lede">Built to the PSI salesperson shape in the November 13, 2025 candidate bulletin: national 80 items / 120 minutes, Connecticut 35 items / 45 minutes, 70% to pass each sitting here. A full run is 115 items and 165 minutes.</p>
+      <p class="lede">The ${esc(EXAM_SHAPE.bulletin)} lists two salesperson portions: general principles, ${EXAM_SHAPE.nationalCount} questions and ${EXAM_SHAPE.nationalMinutes} minutes; Connecticut, ${EXAM_SHAPE.stateCount} questions and ${EXAM_SHAPE.stateMinutes} minutes. A full run is ${EXAM_SHAPE.nationalCount + EXAM_SHAPE.stateCount} questions and ${EXAM_SHAPE.bothMinutes} minutes. The passing score is ${EXAM_SHAPE.passingPercent}% on each portion, and both have to pass.</p>
       <p>The clock pauses when you leave this page or lock the phone. On the real exam day, it will not.</p>
       <button class="btn btn-pine" data-act="mock-scope" aria-pressed="${all ? "true" : "false"}">${all ? "Every chapter" : "Completed chapters only"}</button>
       <p>${scopeLine}</p>
-      <p class="muted">National ${national.ids.length} items, ${national.minutes} min. Connecticut ${stateDraw.ids.length} items, ${stateDraw.minutes} min. Both ${both.ids.length} items, ${both.minutes} min.</p>
+      <p class="muted">General ${national.ids.length} items, ${national.minutes} min. Connecticut ${stateDraw.ids.length} items, ${stateDraw.minutes} min. Both ${both.ids.length} items, ${both.minutes} min.</p>
       <div class="stack">
         ${paused ? `<button class="btn btn-primary" data-act="resume-mock">Resume saved mock (${state.mock.ids.length} items)</button>` : ""}
-        <button class="btn btn-pine" data-mode="national" ${national.ids.length ? "" : "disabled"}>National portion</button>
+        <button class="btn btn-pine" data-mode="national" ${national.ids.length ? "" : "disabled"}>General portion</button>
         <button class="btn btn-pine" data-mode="state" ${stateDraw.ids.length ? "" : "disabled"}>Connecticut portion</button>
         <button class="btn btn-primary" data-mode="both" ${both.ids.length ? "" : "disabled"}>Both portions</button>
       </div>
@@ -450,21 +487,201 @@ function viewMock() {
 function viewMockResult() {
   const mock = state.mock;
   const result = mock.result;
+  const portions = result.portions || [];
+  const portionLines = portions.map((row) => (
+    `<p><strong>${esc(row.label)}</strong> · ${row.correct}/${row.total} · ${row.percent}% · ${row.passed ? "70% or better" : "under 70%"}</p>`
+  )).join("");
   const lines = bank.topics.map((topic) => {
     const row = result.byTopic[topic.id];
     if (!row) return "";
     return `<p><strong>${esc(topic.name)}</strong> · ${row.correct}/${row.total}</p>`;
   }).join("");
+  const both = portions.length > 1;
+  const headline = both
+    ? (result.passed ? "Both portions reached 70%." : "Both portions have to reach 70%.")
+    : (result.passed ? "You cleared 70%." : "Not 70% this time.");
   main.innerHTML = `
     <section class="card">
-      <h2>${result.passed ? "You cleared 70%." : "Not 70% this time."}</h2>
-      <p class="lede">${result.correct} of ${result.total} · ${result.percent}%. A salesperson passing score on the PSI bulletin is 70%. ${mock.everyChapter ? "This sitting included every chapter." : "This sitting used only chapters you've completed."} ${result.passed ? "Hold onto what worked." : "The misses are already in your review pile."}</p>
+      <h2>${headline}</h2>
+      <p class="lede">${both ? "Each portion is scored on its own." : `${result.correct} of ${result.total} · ${result.percent}%.`} The salesperson passing score in the PSI bulletin is ${EXAM_SHAPE.passingPercent}%. ${mock.everyChapter ? "This sitting included every chapter." : "This sitting used only chapters you've completed."} ${result.passed ? "Hold onto what worked." : "The misses are already in your review pile."}</p>
+      ${portionLines}
       ${lines}
       <div class="stack">
         <button class="btn btn-primary" data-act="review-tab">Review the misses</button>
         <button class="btn btn-quiet" data-act="mock-clear">Leave this result</button>
       </div>
     </section>`;
+}
+
+function loopRow(chapter) {
+  return state.chapterLoops?.[chapter] || {};
+}
+
+function viewLoop() {
+  const loop = state.loop;
+  if (loop?.phase === "between") {
+    viewLoopBetween();
+    return;
+  }
+  if (loop?.phase === "result") {
+    viewLoopResult();
+    return;
+  }
+  const chapters = chapterList();
+  const rows = (course?.chapters || []).filter((row) => chapters.includes(row.n));
+  main.innerHTML = `
+    <section class="card">
+      <h2>Chapter study</h2>
+      <p class="lede">Each chapter follows the class order: principles and practices, then the Connecticut law for that chapter, then a short quiz. The quiz holds the answers until the end.</p>
+      ${rows.length ? "" : `<p>Check at least one chapter you have finished. The loop uses those chapters.</p>`}
+      <div class="stack">
+        ${rows.map((row) => {
+          const done = loopRow(row.n);
+          const bits = [
+            done.principles ? "Principles done" : "Principles",
+            done.ct ? "Connecticut law done" : "Connecticut law",
+            done.quizPercent !== undefined ? `Quiz ${done.quizPercent}%` : "Quiz",
+          ];
+          return `<button class="btn btn-quiet" data-act="study-chapter" data-chapter="${row.n}">
+            <strong>Ch ${row.n}</strong> ${esc(row.name)}
+            <span class="muted" style="display:block">${esc(bits.join(" · "))}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </section>`;
+}
+
+function viewLoopBetween() {
+  const loop = state.loop;
+  const title = chapterTitle(loop.chapter);
+  const next = loop.next;
+  let heading = "Connecticut law is next";
+  let body = "Same chapter, different rules. These items are Connecticut statutes and regulations. The general principles you just reviewed stay as they were.";
+  if (next === "quiz" && !loop.ct.length) {
+    heading = "No Connecticut items in this chapter";
+    body = "The bank has no Connecticut-law questions tagged to this chapter. The chapter quiz is next, and it uses the principles items.";
+  } else if (next === "quiz") {
+    heading = "Chapter quiz";
+    body = "A short mix from this chapter. Pick an answer on each item. The explanation waits until you finish.";
+  }
+  main.innerHTML = `
+    <section class="card">
+      <p class="kicker">${esc(title)}</p>
+      <h2>${heading}</h2>
+      <p class="lede">${body}</p>
+      <div class="stack">
+        <button class="btn btn-primary" data-act="loop-continue">${next === "ct" ? "Start Connecticut law" : "Start the quiz"}</button>
+        <button class="btn btn-quiet" data-act="study-list">Back to chapters</button>
+      </div>
+    </section>`;
+}
+
+function viewLoopResult() {
+  const loop = state.loop;
+  const quiz = loop.quiz || { correct: 0, total: 0, percent: 0 };
+  const misses = (loop.quizIds || []).map((id) => {
+    const question = byId[id];
+    const choice = quiz.answers?.[id];
+    if (!question || choice === question.answer) return "";
+    return `<p><strong>${esc(question.stem)}</strong> ${esc(question.explanation)}</p>`;
+  }).join("");
+  main.innerHTML = `
+    <section class="card">
+      <p class="kicker">${esc(chapterTitle(loop.chapter))}</p>
+      <h2>${quiz.percent >= EXAM_SHAPE.passingPercent ? "Chapter quiz is at 70% or better." : "Chapter quiz is under 70%."}</h2>
+      <p class="lede">${quiz.correct} of ${quiz.total} · ${quiz.percent}%. This is a chapter check, not the PSI exam. The bulletin still asks for ${EXAM_SHAPE.passingPercent}% on each full portion.</p>
+      ${misses}
+      <div class="stack">
+        <button class="btn btn-primary" data-act="study-chapter" data-chapter="${loop.chapter}">Run this chapter again</button>
+        <button class="btn btn-quiet" data-act="study-list">Back to chapters</button>
+      </div>
+    </section>`;
+}
+
+function startChapterStudy(chapter) {
+  const plan = chapterStudyPlan(bank.questions, chapter, Math.random);
+  if (!plan.principles.length && !plan.ct.length && !plan.quiz.length) {
+    say("That chapter has no questions yet.");
+    return;
+  }
+  state.loop = {
+    chapter,
+    principles: plan.principles,
+    ct: plan.ct,
+    quizIds: plan.quiz,
+    phase: "run",
+  };
+  if (plan.principles.length) startSession("chapter-principles", plan.principles, null);
+  else if (plan.ct.length) startSession("chapter-ct", plan.ct, null);
+  else beginChapterQuiz();
+}
+
+function beginChapterQuiz() {
+  const loop = state.loop;
+  if (!loop?.quizIds?.length) {
+    loop.phase = "result";
+    loop.quiz = { correct: 0, total: 0, percent: 0, answers: {} };
+    state.loop = loop;
+    go("loop");
+    return;
+  }
+  startSession("chapter-quiz", loop.quizIds, null);
+  state.session.answers = {};
+  save();
+}
+
+function finishLoopStep(session) {
+  const loop = state.loop || { chapter: null, ct: [], quizIds: [] };
+  if (!state.chapterLoops) state.chapterLoops = {};
+  const row = { ...(state.chapterLoops[loop.chapter] || {}) };
+  if (session.kind === "chapter-principles") row.principles = true;
+  if (session.kind === "chapter-ct") row.ct = true;
+  state.chapterLoops[loop.chapter] = row;
+  state.session = null;
+  if (session.kind === "chapter-principles") {
+    loop.phase = "between";
+    loop.next = loop.ct?.length ? "ct" : "quiz";
+  } else {
+    loop.phase = "between";
+    loop.next = "quiz";
+  }
+  state.loop = loop;
+  save();
+  go("loop");
+}
+
+function finishChapterQuiz(session) {
+  const answers = session.answers || {};
+  let correct = 0;
+  session.ids.forEach((id) => {
+    const question = byId[id];
+    const choice = answers[id];
+    const outcome = answerQuestion(state, question, choice ?? -1);
+    state = outcome.state;
+    if (outcome.correct) correct += 1;
+  });
+  const total = session.ids.length;
+  const percent = total ? Math.round((correct / total) * 100) : 0;
+  if (!state.chapterLoops) state.chapterLoops = {};
+  state.chapterLoops[state.loop.chapter] = {
+    ...(state.chapterLoops[state.loop.chapter] || {}),
+    quizPercent: percent,
+  };
+  state.loop.quiz = { correct, total, percent, answers };
+  state.loop.phase = "result";
+  state.session = null;
+  save();
+  go("loop");
+}
+
+function continueLoop() {
+  const loop = state.loop;
+  if (!loop) {
+    go("loop");
+    return;
+  }
+  if (loop.next === "ct" && loop.ct?.length) startSession("chapter-ct", loop.ct, null);
+  else beginChapterQuiz();
 }
 
 function dueInChapters() {
@@ -1082,6 +1299,28 @@ function onClick(event) {
   if (act === "continue") {
     if (state.session) go("question");
     else startJourney();
+  } else if (act === "study-list") {
+    state.loop = null;
+    go("loop");
+  } else if (act === "study-chapter") {
+    startChapterStudy(Number(button.dataset.chapter));
+  } else if (act === "loop-continue") {
+    continueLoop();
+  } else if (act === "quiz-next") {
+    const session = state.session;
+    const id = session?.ids?.[session.index];
+    if (!session || session.answers?.[id] === undefined) {
+      say("Pick an answer first.");
+      return;
+    }
+    if (session.index + 1 >= session.ids.length) finishChapterQuiz(session);
+    else {
+      session.index += 1;
+      session.choice = session.answers[session.ids[session.index]] ?? null;
+      state.session = session;
+      save();
+      viewQuestion();
+    }
   } else if (act === "resume-mock") {
     resumeMock();
     go("mock");
@@ -1184,6 +1423,15 @@ function onClick(event) {
 function chooseAnswer(choice) {
   const session = state.session;
   if (!session || session.phase !== "ask") return;
+  if (session.kind === "chapter-quiz") {
+    session.answers = session.answers || {};
+    session.answers[session.ids[session.index]] = choice;
+    session.choice = choice;
+    state.session = session;
+    save();
+    viewQuestion();
+    return;
+  }
   const question = byId[session.ids[session.index]];
   const outcome = answerQuestion(state, question, choice);
   state = outcome.state;
@@ -1208,6 +1456,10 @@ function chooseAnswer(choice) {
 function advanceSession() {
   const session = state.session;
   if (session.index + 1 >= session.ids.length) {
+    if (session.kind === "chapter-principles" || session.kind === "chapter-ct") {
+      finishLoopStep(session);
+      return;
+    }
     const finishedTown = topicById(session.topicId);
     state.session = null;
     if (session.kind === "journey") {
@@ -1240,6 +1492,7 @@ function beginMock(mode) {
     mode,
     everyChapter: drawn.everyChapter,
     ids: drawn.ids,
+    sections: drawn.sections,
     answers: {},
     flagged: {},
     index: 0,
@@ -1270,7 +1523,7 @@ function stepMock(delta) {
 function finishMock() {
   if (!state.mock || state.mock.submitted) return;
   freezeMock();
-  const recorded = recordExam(state, state.mock.ids, state.mock.answers, byId);
+  const recorded = recordExam(state, state.mock.ids, state.mock.answers, byId, Date.now(), todayKey(), state.mock.sections);
   state = recorded.state;
   state.mock.submitted = true;
   state.mock.running = false;
@@ -1362,6 +1615,7 @@ async function boot() {
   crosswords = await crosswordResponse.json();
   course = await courseResponse.json();
   byId = Object.fromEntries(bank.questions.map((q) => [q.id, q]));
+  state = hydratePortions(state, bank.questions);
   if (state.mock && !state.mock.submitted && state.mock.running) {
     state.mock.running = false;
     state.mock.lastTick = Date.now();
@@ -1374,7 +1628,7 @@ async function boot() {
   else if (saved === "mock" && state.mock) {
     if (!state.mock.submitted) resumeMock();
     screen = "mock";
-  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily"].includes(saved)) screen = saved;
+  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily", "loop"].includes(saved)) screen = saved;
   else screen = "home";
   render();
   if ("serviceWorker" in navigator) {
