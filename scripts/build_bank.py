@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from qutil import item, src, cgs, CH223
+from course_units import classify_question
 from bank_ct import ct_questions
 from bank_national import national_questions
 from bank_national_b import more_national
@@ -850,6 +851,7 @@ def finalize(raw):
         questions.append({
             "id": qid,
             "topic": raw_q["topic"],
+            "unit": classify_question(raw_q["topic"], stem, raw_q["explanation"]),
             "pools": raw_q["pools"],
             "stem": stem,
             "choices": choices,

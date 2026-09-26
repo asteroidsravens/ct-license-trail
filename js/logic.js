@@ -52,6 +52,7 @@ export function createState() {
     session: null,
     introSeen: false,
     lastScreen: "home",
+    courseUnit: null,
     crossword: {
       streak: { count: 0, lastDay: null },
       solved: {},
@@ -62,15 +63,29 @@ export function createState() {
 
 const WEEKDAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
-export function puzzleForDate(pack, date = new Date()) {
+export function courseUnitId(state, units) {
+  const ids = (units || []).map((unit) => unit.id);
+  if (ids.includes(state?.courseUnit)) return state.courseUnit;
+  return ids[0] || null;
+}
+
+export function puzzleForDate(pack, date = new Date(), unitId) {
   const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const epoch = Date.UTC(2024, 0, 1);
   const days = Math.floor((utc - epoch) / 86400000);
   const week = Math.floor(days / 7);
   const weekday = WEEKDAY_NAMES[date.getDay()];
-  const pool = pack.days[weekday];
+  let resolved = unitId || null;
+  let pool;
+  if (pack.ranges) {
+    const order = pack.unitOrder || Object.keys(pack.ranges);
+    if (!resolved || !pack.ranges[resolved]) resolved = order.find((id) => pack.ranges[id]) || order[0];
+    pool = pack.ranges[resolved].days[weekday];
+  } else {
+    pool = pack.days[weekday];
+  }
   const index = ((week % pool.length) + pool.length) % pool.length;
-  return { puzzle: pool[index], weekday, dateKey: todayKey(date), index };
+  return { puzzle: pool[index], weekday, dateKey: todayKey(date), index, unitId: resolved };
 }
 
 export function awardCrossword(state, day, clean, puzzleId) {

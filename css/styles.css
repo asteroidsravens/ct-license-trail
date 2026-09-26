@@ -289,13 +289,15 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 8px; }
   font-size: 1.4rem;
 }
 label.field { display: block; font-weight: 700; margin-bottom: 6px; }
-input[type="date"], input[type="text"] {
+input[type="date"], input[type="text"], select {
   width: 100%;
   min-height: var(--tap);
   border-radius: 12px;
   border: 2px solid var(--line);
   padding: 8px 12px;
   background: #fff;
+  font: inherit;
+  color: inherit;
 }
 .sr {
   position: absolute;

@@ -13,8 +13,9 @@ Open the site, or run it locally (see below). Progress stays in this browser (`l
 - **Math Pass.** Commission, splits, seller proceeds, prorations, Connecticut conveyance tax, loan-to-value, PITI, area, cap rate, equity, points, and a few related drills. The steps appear after you answer.
 - **Mock exam.** National portion: 80 questions, 120 minutes. Connecticut portion: 35 questions, 45 minutes. Both: 115 questions, 165 minutes. The practice pass line is 70 percent, matching the salesperson bulletin. The clock pauses if you leave the page. The real exam clock does not.
 - **Review.** Missed questions come back immediately. A correct answer waits longer the next time.
-- **Daily crossword.** A new original grid each calendar day. Monday is the smallest; clues get harder through Saturday; Sunday is larger and themed around exam vocabulary. Tap a square to select it, tap again to switch across and down. Check or reveal a letter, a word, or the whole puzzle. The timer pauses when you leave. A clean solve adds 40 XP and one of each supply that is not already full. A solve that used a reveal adds 12 XP. The crossword streak and the in-progress grid stay on this phone.
-- **Exam date.** Type your own date under Exam date and sound. Change it whenever you want. Sound is off until you turn it on.
+- **Daily crossword.** A new original grid each calendar day. It only uses terms from the course unit you pick under “Where am I in my course?” and from the units before that one. Early units use a smaller mini grid when the vocabulary is still short. On the full course, Monday is the smallest, clues get harder through Saturday, and Sunday is larger. Tap a square to select it, tap again to switch across and down. Check or reveal a letter, a word, or the whole puzzle. The timer pauses when you leave. A clean solve adds 40 XP and one of each supply that is not already full. A solve that used a reveal adds 12 XP. The crossword streak and the in-progress grid stay on this phone. XP for the crossword counts once per calendar day.
+- **Course unit.** The unit list lives in `data/course.json`. Replace that list with a real syllabus when you have one. Keep the ids, or retag the `words` map and the `unit` field on each question, then rebuild the crossword library.
+- **Exam date.** Type your own date under Course, exam date, and sound. Change it whenever you want. Sound is off until you turn it on.
 
 The app is an installable PWA. Add it to your home screen after it loads once; the service worker keeps the question bank available offline.
 
@@ -32,6 +33,7 @@ Check the game rules, the bank, and the crossword library:
 
 ```bash
 node scripts/test_game.mjs
+python3 scripts/course_units.py
 python3 scripts/build_crosswords.py
 ```
 
@@ -43,7 +45,7 @@ Questions live in `scripts/bank_ct.py`, `scripts/bank_national.py`, `scripts/ban
 python3 scripts/build_bank.py
 ```
 
-That writes `data/questions.json`. Each item needs a stem, one correct answer, three wrong answers, and an explanation. Connecticut items need a `source` with a `label` and a `url` pointing at a public official page. Math items need `steps`. Do not copy questions from a textbook, a paid prep course, or PSI's sample items.
+That writes `data/questions.json`. Each item needs a stem, one correct answer, three wrong answers, and an explanation. Connecticut items need a `source` with a `label` and a `url` pointing at a public official page. Math items need `steps`. The rebuild also stamps a `unit` from `scripts/course_units.py`. Do not copy questions from a textbook, a paid prep course, or PSI's sample items.
 
 Topic weights in `TOPICS` must keep adding up to 80 for the national portion and 35 for the Connecticut portion. Those weights are how the mock exam draws its mix. The Math Pass topic supplies the national calculations block (weight 6) and is not a stop on the road.
 

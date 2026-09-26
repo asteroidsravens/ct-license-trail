@@ -1,4 +1,4 @@
-const CACHE = "ct-license-trail-v6";
+const CACHE = "ct-license-trail-v7";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,7 @@ const ASSETS = [
   "./js/logic.js",
   "./data/questions.json",
   "./data/crosswords.json",
+  "./data/course.json",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

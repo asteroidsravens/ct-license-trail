@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Build data/crosswords.json: 8 weeks of original daily puzzles.
+"""Build data/crosswords.json: 8 weeks of original daily puzzles per course range.
 
 Run from the repo root: python3 scripts/build_crosswords.py
 
-Grids are rotationally symmetric, every white square is checked, and every
-entry is at least 3 letters. Monday is the smallest. Difficulty rises through
-Saturday by grid density and clue wordplay. Sunday is larger. Patterns are
-curated; fills are searched from the original clue bank and then checked.
+Each unit in data/course.json gets a library that may use only words from
+that unit and the units before it. Early ranges use mini grids when the
+cumulative vocabulary is still short. The full Monday-to-Sunday size ladder
+is used once enough longer terms are in range. Grids are rotationally
+symmetric, every white square is checked, and every entry is at least 3 letters.
 """
 
 import json
@@ -354,8 +355,8 @@ def choose_clue(meta, weekday, rng):
     return text, source
 
 
-def build_puzzle(weekday, index, grid, info, lib, rng, title, blurb, min_exam):
-    if not fill(grid, info["slots"], lib, rng):
+def build_puzzle(weekday, index, grid, info, lib, rng, title, blurb, min_exam, prefix, node_cap, restarts):
+    if not fill(grid, info["slots"], lib, rng, node_cap=node_cap, restarts=restarts):
         return None
     answers = [s.get("answer") for s in info["slots"]]
     if any(not a for a in answers) or len(set(answers)) != len(answers):
@@ -376,13 +377,14 @@ def build_puzzle(weekday, index, grid, info, lib, rng, title, blurb, min_exam):
             "answer": slot["answer"],
             "clue": clue,
             "source": source,
+            "unit": lib.meta[slot["answer"]]["unit"],
         }
         (across if slot["across"] else down).append(entry)
     across.sort(key=lambda e: (e["n"], e["col"]))
     down.sort(key=lambda e: (e["n"], e["row"]))
     featured = [word for word in SPOTLIGHT if word in set(answers)]
     return {
-        "id": f"{weekday}-{index + 1}",
+        "id": f"{prefix}-{weekday}-{index + 1}",
         "weekday": weekday,
         "title": title,
         "blurb": blurb,
@@ -417,43 +419,131 @@ def sunday_copy(puzzle, words):
         entry["source"] = meta["source"]
 
 
-def make_day(day, patterns, lib, words):
+def effort_for(size):
+    if size <= 5:
+        return 2500, 4
+    if size <= 7:
+        return 5000, 6
+    if size <= 9:
+        return 9000, 6
+    return 12000, 8
+
+
+def make_day(day, patterns, lib, words, prefix, min_exam, node_cap, restarts, theme_sunday=False):
     made = []
     seen = set()
     attempt = 0
-    min_exam = 4 if day == "sunday" else 2
-    while len(made) < 8 and attempt < 80:
+    while len(made) < 8 and attempt < 24:
         attempt += 1
         pattern = patterns[(attempt + len(made)) % len(patterns)]
-        rng = random.Random(f"ctlt-xw-{day}-{attempt}-{len(made)}")
+        rng = random.Random(f"ctlt-xw-{prefix}-{day}-{attempt}-{len(made)}")
         grid = [list(row) for row in pattern]
         info = analyze(grid, max_run=5)
         if not info:
-            raise SystemExit(f"Illegal curated pattern for {day}")
+            raise SystemExit(f"Illegal curated pattern for {prefix} {day}")
         title = TITLES[day][len(made)]
-        puzzle = build_puzzle(day, len(made), grid, info, lib, rng, title, BLURBS[day], min_exam)
+        puzzle = build_puzzle(
+            day, len(made), grid, info, lib, rng, title, BLURBS[day],
+            min_exam, prefix, node_cap, restarts,
+        )
         if not puzzle:
             continue
         signature = tuple(sorted(entry["answer"] for entry in puzzle["across"] + puzzle["down"]))
         if signature in seen:
             continue
         seen.add(signature)
-        if day == "sunday":
+        if theme_sunday:
             sunday_copy(puzzle, words)
         made.append(puzzle)
-        print(f"  {day} {len(made)}/8 entries={len(puzzle['across']) + len(puzzle['down'])} featured={puzzle['featured'][:4]}", flush=True)
+        print(
+            f"  {prefix} {day} {len(made)}/8 size={puzzle['size']} featured={puzzle['featured'][:3]}",
+            flush=True,
+        )
     if len(made) < 8:
-        raise SystemExit(f"Only built {len(made)} {day} puzzles")
+        return None
     return made
 
 
-def validate_library(library, words):
-    ct_marks = ("connecticut", "dcp", "psi ")
-    sizes = {}
+def choose_tier(n_long):
+    """Grid ladder from how many real-length terms are in the cumulative range.
+
+    Three-letter glue can fill a large grid before the course has enough
+    vocabulary, so the count that matters is words of five letters or more.
+    """
+    if n_long >= 320:
+        return "full"
+    if n_long >= 180:
+        return "mid"
+    return "mini"
+
+
+def day_patterns(book, tier, day):
+    if tier == "full":
+        return book[day]
+    if tier == "mid":
+        if day == "monday":
+            return book["monday"]
+        if day == "sunday":
+            return book["thursday"]
+        return book["tuesday"]
+    if day == "sunday":
+        return book["tuesday"]
+    return book["monday"]
+
+
+def attempt_day(prefix, day, patterns, lib, words, min_exam, theme_sunday=False):
+    size = len(patterns[0])
+    node_cap, restarts = effort_for(size)
+    floors = []
+    for floor in (min_exam, 1, 0):
+        if floor not in floors and floor <= min_exam:
+            floors.append(floor)
+    for floor in floors:
+        made = make_day(
+            day, patterns, lib, words, prefix, floor, node_cap, restarts, theme_sunday=theme_sunday,
+        )
+        if made:
+            return made
+        print(f"  {prefix} {day} retry with min_exam {floor} failed", flush=True)
+    return None
+
+
+def build_range(unit_id, tier, words):
+    lib = Library(words)
+    book = pattern_book()
+    days = {}
     for day in WEEKDAYS:
-        puzzles = library[day]
+        patterns = day_patterns(book, tier, day)
+        min_exam = 1 if tier == "mini" else (4 if tier == "full" and day == "sunday" else 2)
+        made = attempt_day(unit_id, day, patterns, lib, words, min_exam, theme_sunday=(day == "sunday"))
+        if not made and day == "sunday":
+            fallback = book["monday"] if tier == "mini" else book["tuesday"]
+            print(f"  {unit_id} sunday using a smaller grid", flush=True)
+            made = attempt_day(unit_id, day, fallback, lib, words, 1, theme_sunday=True)
+        if not made:
+            raise SystemExit(f"Could not build {unit_id} {day} ({tier})")
+        if day == "sunday":
+            larger = made[0]["size"] > days["saturday"][0]["size"]
+            if not larger:
+                for puzzle in made:
+                    puzzle["blurb"] = "Sunday theme: exam vocabulary from the units covered so far."
+                    puzzle["theme"] = "exam-vocabulary"
+        days[day] = made
+        print(f"{unit_id} {tier} {day} size {made[0]['size']}", flush=True)
+    return {"through": unit_id, "tier": tier, "days": days}
+
+
+def validate_range(unit_id, pack, words, order):
+    ct_marks = ("connecticut", "dcp", "psi ")
+    tier = pack["tier"]
+    limit = order.index(unit_id)
+    allowed = set(order[: limit + 1])
+    sizes = {}
+    days = pack["days"]
+    for day in WEEKDAYS:
+        puzzles = days[day]
         if len(puzzles) < 8:
-            raise SystemExit(f"{day} has {len(puzzles)}")
+            raise SystemExit(f"{unit_id} {day} has {len(puzzles)}")
         for puzzle in puzzles:
             n = puzzle["size"]
             sizes[day] = n
@@ -471,6 +561,10 @@ def validate_library(library, words):
                 seen.add(answer)
                 if answer not in words:
                     raise SystemExit(f"unknown word {answer}")
+                if entry.get("unit") != words[answer]["unit"]:
+                    raise SystemExit(f"unit mismatch {puzzle['id']} {answer}")
+                if entry["unit"] not in allowed:
+                    raise SystemExit(f"{puzzle['id']} jumps ahead with {answer} ({entry['unit']})")
                 if len(answer) < 3:
                     raise SystemExit(f"short answer {puzzle['id']} {answer}")
                 r, c = entry["row"], entry["col"]
@@ -498,31 +592,74 @@ def validate_library(library, words):
             for word in puzzle.get("featured") or []:
                 if word not in seen:
                     raise SystemExit(f"featured word missing {puzzle['id']} {word}")
-    if not (sizes["monday"] < sizes["tuesday"] <= sizes["wednesday"] < sizes["thursday"]):
-        raise SystemExit(f"weekday sizes do not rise {sizes}")
-    if not (sizes["saturday"] < sizes["sunday"]):
-        raise SystemExit(f"Sunday must be larger than Saturday {sizes}")
-    print("validated", {day: sizes[day] for day in WEEKDAYS})
+    if sizes["sunday"] < sizes["saturday"]:
+        raise SystemExit(f"{unit_id} Sunday smaller than Saturday {sizes}")
+    if tier == "full":
+        if not (sizes["monday"] < sizes["tuesday"] <= sizes["wednesday"] < sizes["thursday"]):
+            raise SystemExit(f"{unit_id} weekday sizes do not rise {sizes}")
+        if not (sizes["saturday"] < sizes["sunday"]):
+            raise SystemExit(f"{unit_id} Sunday must be larger than Saturday {sizes}")
+    elif tier == "mini":
+        if sizes["monday"] > 5 or sizes["saturday"] > 5:
+            raise SystemExit(f"{unit_id} mini grid too big {sizes}")
+    else:
+        if not (sizes["monday"] < sizes["tuesday"] == sizes["saturday"]):
+            raise SystemExit(f"{unit_id} mid sizes unexpected {sizes}")
+    print("validated", unit_id, tier, {day: sizes[day] for day in WEEKDAYS})
 
 
 def main():
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    import os
+
+    from course_units import apply_word_units, load_course
+
+    course = load_course()
     words = load_words()
-    print(f"clue bank {len(words)} words")
-    lib = Library(words)
-    book = pattern_book()
-    library = {}
-    for day in WEEKDAYS:
-        print(day, "patterns", len(book[day]))
-        library[day] = make_day(day, book[day], lib, words)
-    validate_library(library, words)
+    apply_word_units(words, course)
+    order = [unit["id"] for unit in course["units"]]
+    print(f"clue bank {len(words)} words, {len(order)} units")
+    jobs = []
+    running_long = 0
+    for unit_id in order:
+        allowed = set(order[: order.index(unit_id) + 1])
+        subset = {word: meta for word, meta in words.items() if meta["unit"] in allowed}
+        n_long = sum(1 for word in subset if len(word) >= 5)
+        running_long = n_long
+        tier = choose_tier(n_long)
+        print(f"queue {unit_id} tier={tier} words={len(subset)} long={n_long}")
+        jobs.append((unit_id, tier, subset))
+
+    ranges = {}
+    workers = min(4, os.cpu_count() or 2)
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        future_map = {
+            pool.submit(build_range, unit_id, tier, subset): unit_id
+            for unit_id, tier, subset in jobs
+        }
+        for future in as_completed(future_map):
+            unit_id = future_map[future]
+            ranges[unit_id] = future.result()
+            print(f"finished {unit_id}", flush=True)
+
+    for unit_id in order:
+        validate_range(unit_id, ranges[unit_id], words, order)
+
     payload = {
-        "version": 1,
+        "version": 2,
         "epoch": "2024-01-01",
-        "note": "Original puzzles for CT License Trail. The weekday and the week count since Monday 2024-01-01 pick the grid. No newspaper puzzle, name, or branding is used.",
-        "days": library,
+        "unitOrder": order,
+        "note": (
+            "Original puzzles for CT License Trail. Each course unit has a prebuilt "
+            "library that uses only words from that unit and the units before it. "
+            "The weekday and the week count since Monday 2024-01-01 pick the grid "
+            "inside the player's current unit. Replace data/course.json to change "
+            "the syllabus, then rebuild this file. No newspaper puzzle, name, or branding is used."
+        ),
+        "ranges": {unit_id: ranges[unit_id] for unit_id in order},
     }
     OUT.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    total = sum(len(v) for v in library.values())
+    total = sum(len(day_puzzles) for pack in ranges.values() for day_puzzles in pack["days"].values())
     print(f"Wrote {total} puzzles to {OUT}")
 
 

@@ -1,7 +1,7 @@
 import {
   STORAGE_KEY, SUPPLIES, SUPPLY_MAX, createState, levelInfo, daysUntil, todayKey,
   masteryPercent, answerQuestion, dueReviews, pickQuestions, sampleExam, recordExam,
-  roadTopics, puzzleForDate, awardCrossword,
+  roadTopics, puzzleForDate, awardCrossword, courseUnitId,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -14,6 +14,7 @@ const countPill = document.querySelector("#count-pill");
 let bank = null;
 let byId = {};
 let crosswords = null;
+let course = null;
 let state = loadState();
 let screen = "home";
 let calcValue = "0";
@@ -208,8 +209,8 @@ function viewHome() {
       <div class="stack">
         ${resumeMock ? `<button class="btn btn-primary" data-act="resume-mock">Resume mock exam</button>` : ""}
         <button class="btn btn-primary" data-act="continue">${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
-        <button class="btn btn-quiet" data-act="daily">${state.crossword?.solved?.[todayKey()] ? "Today's crossword · solved" : "Today's crossword"}</button>
-        <button class="btn btn-quiet" data-act="settings">Exam date and sound</button>
+        <button class="btn btn-quiet" data-act="daily">${dailyHomeLabel()}</button>
+        <button class="btn btn-quiet" data-act="settings">Course, exam date, and sound</button>
       </div>
     </section>
     <section class="card">
@@ -245,9 +246,10 @@ function viewQuestion() {
   const answered = session.phase === "explain";
   const keys = ["1", "2", "3", "4"];
   const where = session.kind === "review" ? "Review" : session.kind === "math" ? "Math Pass" : topic.town;
+  const unitName = course?.units?.find((unit) => unit.id === question.unit)?.name;
   main.innerHTML = `
     <article class="card">
-      <p class="kicker">${esc(where)} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
+      <p class="kicker">${esc(where)}${unitName ? ` · ${esc(unitName)}` : ""} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
       <h2 class="stem" id="stem">${esc(question.stem)}</h2>
       <div class="stack" role="group" aria-labelledby="stem">
         ${question.choices.map((choice, index) => {
@@ -432,7 +434,20 @@ function viewReviewHome() {
 }
 
 function viewSettings() {
+  const units = course?.units || [];
+  const current = courseUnitId(state, units);
   main.innerHTML = `
+    <section class="card">
+      <h2>Where am I in my course?</h2>
+      <p>Pick the unit you are on. The daily crossword uses terms from that unit and the ones before it, so it does not jump ahead.</p>
+      <label class="field" for="course-unit">Current unit</label>
+      <select id="course-unit">
+        ${units.map((unit, index) => `<option value="${esc(unit.id)}" ${unit.id === current ? "selected" : ""}>${index + 1}. ${esc(unit.name)}</option>`).join("")}
+      </select>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn btn-primary" data-act="save-unit">Save unit</button>
+      </div>
+    </section>
     <section class="card">
       <h2>Your exam date</h2>
       <p>Type the date you are aiming for. It is only a countdown. Change it whenever the plan changes.</p>
@@ -525,8 +540,26 @@ function crosswordBook() {
   return state.crossword;
 }
 
+function currentUnit() {
+  return courseUnitId(state, course?.units || crosswords?.unitOrder?.map((id) => ({ id })) || []);
+}
+
+function unitName(id) {
+  return course?.units?.find((unit) => unit.id === id)?.name || id || "";
+}
+
+function dailyHomeLabel() {
+  if (state.crossword?.solved?.[todayKey()]) return "Today's crossword · solved";
+  const name = unitName(currentUnit());
+  return name ? `Today's crossword · through ${name}` : "Today's crossword";
+}
+
 function todayPuzzle() {
-  return puzzleForDate(crosswords, new Date());
+  return puzzleForDate(crosswords, new Date(), currentUnit());
+}
+
+function slotKey(picked) {
+  return `${picked.dateKey}:${picked.unitId}`;
 }
 
 function isBlack(puzzle, r, c) {
@@ -555,9 +588,9 @@ function firstWhite(puzzle) {
   return { r: 0, c: 0 };
 }
 
-function ensureProgress(puzzle, day) {
+function ensureProgress(puzzle, key, calendarDay) {
   const book = crosswordBook();
-  let prog = book.progress[day];
+  let prog = book.progress[key];
   const size = puzzle.size * puzzle.size;
   if (!prog || prog.id !== puzzle.id || !Array.isArray(prog.letters) || prog.letters.length !== size) {
     const start = firstWhite(puzzle);
@@ -575,9 +608,10 @@ function ensureProgress(puzzle, day) {
       lastTick: Date.now(),
       done: false,
     };
-    book.progress[day] = prog;
+    book.progress[key] = prog;
   }
-  if (book.solved[day] && !prog.done) {
+  const solvedToday = book.solved[calendarDay];
+  if (solvedToday && solvedToday.id === puzzle.id && !prog.done) {
     prog.done = true;
     prog.running = false;
     for (let r = 0; r < puzzle.size; r += 1) {
@@ -607,7 +641,8 @@ function formatSeconds(total) {
 }
 
 function rollDaily(now = Date.now()) {
-  const prog = state.crossword?.progress?.[todayKey()];
+  if (!crosswords || !course) return;
+  const prog = state.crossword?.progress?.[slotKey(todayPuzzle())];
   if (!prog?.running) return;
   const add = Math.max(0, Math.floor((now - prog.lastTick) / 1000));
   if (add > 0) {
@@ -617,7 +652,8 @@ function rollDaily(now = Date.now()) {
 }
 
 function freezeDaily(now = Date.now()) {
-  const prog = state.crossword?.progress?.[todayKey()];
+  if (!crosswords || !course) return;
+  const prog = state.crossword?.progress?.[slotKey(todayPuzzle())];
   if (!prog?.running) return;
   rollDaily(now);
   prog.running = false;
@@ -629,7 +665,7 @@ function freezeDaily(now = Date.now()) {
 function resumeDaily(now = Date.now()) {
   if (!crosswords) return;
   const picked = todayPuzzle();
-  const prog = ensureProgress(picked.puzzle, picked.dateKey);
+  const prog = ensureProgress(picked.puzzle, slotKey(picked), picked.dateKey);
   if (prog.done) return;
   prog.running = true;
   prog.lastTick = now;
@@ -638,7 +674,7 @@ function resumeDaily(now = Date.now()) {
 function paintDaily() {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   const entry = entryAt(puzzle, prog.row, prog.col, prog.dir);
   const wordCells = new Set((entry ? cellsOf(entry, prog.dir) : []).map(([r, c]) => `${r},${c}`));
   main.querySelectorAll(".xw-cell[data-r]").forEach((cell) => {
@@ -669,10 +705,12 @@ function paintDaily() {
   if (banner) {
     const solved = state.crossword.solved[picked.dateKey];
     banner.hidden = !prog.done;
-    if (prog.done && solved) {
+    if (prog.done && solved && solved.id === puzzle.id) {
       banner.textContent = solved.clean
         ? `Solved clean. +${solved.xp} XP, and a supply wherever one fit.`
         : `Solved. +${solved.xp} XP. A reveal skips the supply bonus.`;
+    } else if (prog.done && solved) {
+      banner.textContent = "Solved. Today's crossword XP was already counted.";
     } else if (prog.done) {
       banner.textContent = "Solved.";
     }
@@ -688,7 +726,7 @@ function viewDaily() {
   }
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   if (!prog.done) resumeDaily();
   const n = puzzle.size;
   const cells = [];
@@ -710,9 +748,9 @@ function viewDaily() {
     <div class="xw">
       <div class="xw-scroll">
         <section class="card xw-head">
-          <p class="kicker">${esc(picked.weekday)} · ${esc(picked.dateKey)}</p>
+          <p class="kicker">${esc(picked.weekday)} · ${esc(picked.dateKey)} · through ${esc(unitName(picked.unitId))}</p>
           <h2>${esc(puzzle.title)}</h2>
-          <p class="lede">${esc(puzzle.blurb)}</p>
+          <p class="lede">${esc(puzzle.blurb)} Terms from this unit and the ones before it.</p>
           <p class="xw-meta"><span class="xw-time" aria-label="Elapsed time">0:00</span> · <span class="xw-streak">crossword streak 0</span></p>
           <p class="xw-banner note" hidden></p>
         </section>
@@ -748,7 +786,7 @@ function viewDaily() {
   window.clearInterval(timerHandle);
   timerHandle = window.setInterval(() => {
     if (screen !== "daily") return;
-    const current = state.crossword?.progress?.[picked.dateKey];
+    const current = state.crossword?.progress?.[slotKey(picked)];
     if (!current?.running) return;
     rollDaily();
     const time = main.querySelector(".xw-time");
@@ -819,13 +857,15 @@ function finishIfSolved(puzzle, prog, day) {
     say(result.clean
       ? `Crossword solved. +${result.xpGain} XP.${supply}`
       : `Crossword solved with reveals. +${result.xpGain} XP.`);
+  } else {
+    say("Solved. Today's crossword XP was already counted.");
   }
 }
 
 function selectCell(r, c) {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   if (isBlack(puzzle, r, c)) return;
   if (prog.row === r && prog.col === c) {
     const other = prog.dir === "across" ? "down" : "across";
@@ -845,7 +885,7 @@ function selectCell(r, c) {
 function xwType(letter) {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   if (prog.done) return;
   const index = prog.row * puzzle.size + prog.col;
   prog.letters[index] = letter;
@@ -860,7 +900,7 @@ function xwType(letter) {
 function xwBackspace() {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   if (prog.done) return;
   const index = prog.row * puzzle.size + prog.col;
   if (prog.letters[index]) {
@@ -880,7 +920,7 @@ function xwBackspace() {
 
 function xwToggle() {
   const picked = todayPuzzle();
-  const prog = ensureProgress(picked.puzzle, picked.dateKey);
+  const prog = ensureProgress(picked.puzzle, slotKey(picked), picked.dateKey);
   const other = prog.dir === "across" ? "down" : "across";
   if (entryAt(picked.puzzle, prog.row, prog.col, other)) prog.dir = other;
   save();
@@ -890,7 +930,7 @@ function xwToggle() {
 function xwTool(kind) {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   if (prog.done && kind.startsWith("check")) {
     paintDaily();
     return;
@@ -912,7 +952,7 @@ function xwTool(kind) {
 function xwArrow(key) {
   const picked = todayPuzzle();
   const puzzle = picked.puzzle;
-  const prog = ensureProgress(puzzle, picked.dateKey);
+  const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   const step = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[key];
   const nr = prog.row + step[0];
   const nc = prog.col + step[1];
@@ -982,6 +1022,13 @@ function onClick(event) {
       }
       startSession("math", ids.slice(0, 3), "math");
     } else go("math");
+  } else if (act === "save-unit") {
+    const value = document.querySelector("#course-unit")?.value;
+    const ids = (course?.units || []).map((unit) => unit.id);
+    state.courseUnit = ids.includes(value) ? value : (ids[0] || null);
+    save();
+    say("Course unit saved.");
+    viewSettings();
   } else if (act === "save-date") {
     const value = document.querySelector("#exam-date").value;
     state.examDate = value || null;
@@ -1201,12 +1248,14 @@ document.addEventListener("visibilitychange", () => {
 });
 
 async function boot() {
-  const [questionResponse, crosswordResponse] = await Promise.all([
+  const [questionResponse, crosswordResponse, courseResponse] = await Promise.all([
     fetch("./data/questions.json"),
     fetch("./data/crosswords.json"),
+    fetch("./data/course.json"),
   ]);
   bank = await questionResponse.json();
   crosswords = await crosswordResponse.json();
+  course = await courseResponse.json();
   byId = Object.fromEntries(bank.questions.map((q) => [q.id, q]));
   if (state.mock && !state.mock.submitted && state.mock.running) {
     state.mock.running = false;

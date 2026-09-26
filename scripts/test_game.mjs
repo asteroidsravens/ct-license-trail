@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import {
   createState, levelInfo, daysUntil, todayKey, previousDay, masteryPercent,
   answerQuestion, dueReviews, sampleExam, scoreExam, recordExam, roadTopics,
-  puzzleForDate, awardCrossword,
+  puzzleForDate, awardCrossword, courseUnitId,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -93,67 +93,107 @@ const scored = scoreExam(both.ids, Object.fromEntries(both.ids.map((id) => [id, 
 assert.equal(scored.percent, 100);
 assert.equal(scored.passed, true);
 
+const course = JSON.parse(readFileSync(new URL("../data/course.json", import.meta.url), "utf8"));
 const pack = JSON.parse(readFileSync(new URL("../data/crosswords.json", import.meta.url), "utf8"));
-const order = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-for (const day of order) {
-  assert.ok(pack.days[day].length >= 8, `${day} puzzles`);
+const unitOrder = course.units.map((unit) => unit.id);
+assert.deepEqual(pack.unitOrder, unitOrder);
+assert.equal(courseUnitId(createState(), course.units), unitOrder[0]);
+const moved = createState();
+moved.courseUnit = unitOrder[3];
+assert.equal(courseUnitId(moved, course.units), unitOrder[3]);
+moved.courseUnit = "retired-syllabus-unit";
+assert.equal(courseUnitId(moved, course.units), unitOrder[0]);
+const unitIndex = Object.fromEntries(unitOrder.map((id, index) => [id, index]));
+for (const item of questions) {
+  assert.equal(typeof unitIndex[item.unit], "number", `${item.id} unit`);
 }
-assert.ok(pack.days.monday[0].size < pack.days.thursday[0].size);
-assert.ok(pack.days.saturday[0].size < pack.days.sunday[0].size);
-assert.equal(pack.days.sunday[0].size > pack.days.friday[0].size, true);
-const banned = /new york times|\\bnyt\\b|wall street journal/i;
-for (const day of order) {
-  for (const puzzle of pack.days[day]) {
-    assert.equal(banned.test(JSON.stringify(puzzle)), false, puzzle.id);
-    const n = puzzle.size;
-    const grid = puzzle.grid;
-    assert.equal(grid.length, n);
-    const seen = new Set();
-    for (const entry of [...puzzle.across, ...puzzle.down]) {
-      assert.ok(entry.answer.length >= 3, puzzle.id);
-      assert.equal(seen.has(entry.answer), false, `${puzzle.id} ${entry.answer}`);
-      seen.add(entry.answer);
-      let r = entry.row;
-      let c = entry.col;
-      const across = puzzle.across.includes(entry);
-      let built = "";
-      for (const ch of entry.answer) {
-        assert.notEqual(grid[r][c], "#");
-        built += grid[r][c];
-        if (across) c += 1;
-        else r += 1;
+const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const banned = /new york times|\bnyt\b|wall street journal/i;
+let puzzleCount = 0;
+for (const unitId of unitOrder) {
+  const range = pack.ranges[unitId];
+  const limit = unitIndex[unitId];
+  for (const day of days) {
+    assert.ok(range.days[day].length >= 8, `${unitId} ${day}`);
+    for (const puzzle of range.days[day]) {
+      puzzleCount += 1;
+      assert.equal(banned.test(JSON.stringify(puzzle)), false, puzzle.id);
+      const n = puzzle.size;
+      const grid = puzzle.grid;
+      assert.equal(grid.length, n);
+      const seen = new Set();
+      for (const entry of [...puzzle.across, ...puzzle.down]) {
+        assert.ok(entry.answer.length >= 3, puzzle.id);
+        assert.equal(seen.has(entry.answer), false, `${puzzle.id} ${entry.answer}`);
+        seen.add(entry.answer);
+        assert.equal(course.words[entry.answer], entry.unit, `${puzzle.id} ${entry.answer}`);
+        assert.ok(unitIndex[entry.unit] <= limit, `${puzzle.id} jumps to ${entry.answer}`);
+        let r = entry.row;
+        let c = entry.col;
+        const across = puzzle.across.includes(entry);
+        let built = "";
+        for (const ch of entry.answer) {
+          assert.notEqual(grid[r][c], "#");
+          built += grid[r][c];
+          if (across) c += 1;
+          else r += 1;
+        }
+        assert.equal(built, entry.answer, puzzle.id);
+        const clue = entry.clue.toLowerCase();
+        if (clue.includes("connecticut") || clue.includes("dcp") || clue.includes("psi ")) {
+          assert.ok(entry.source && entry.source.url, `${puzzle.id} ${entry.clue}`);
+        }
       }
-      assert.equal(built, entry.answer, puzzle.id);
-      const clue = entry.clue.toLowerCase();
-      if (clue.includes("connecticut") || clue.includes("dcp") || clue.includes("psi ")) {
-        assert.ok(entry.source && entry.source.url, `${puzzle.id} ${entry.clue}`);
+      for (let r = 0; r < n; r += 1) {
+        for (let c = 0; c < n; c += 1) {
+          assert.equal(grid[r][c] === "#", grid[n - 1 - r][n - 1 - c] === "#", puzzle.id);
+          if (grid[r][c] === "#") continue;
+          const across = puzzle.across.some((entry) => entry.row === r && c >= entry.col && c < entry.col + entry.answer.length);
+          const down = puzzle.down.some((entry) => entry.col === c && r >= entry.row && r < entry.row + entry.answer.length);
+          assert.equal(across && down, true, `${puzzle.id} ${r},${c}`);
+        }
       }
     }
-    for (let r = 0; r < n; r += 1) {
-      for (let c = 0; c < n; c += 1) {
-        assert.equal(grid[r][c] === "#", grid[n - 1 - r][n - 1 - c] === "#", puzzle.id);
-        if (grid[r][c] === "#") continue;
-        const across = puzzle.across.some((entry) => entry.row === r && c >= entry.col && c < entry.col + entry.answer.length);
-        const down = puzzle.down.some((entry) => entry.col === c && r >= entry.row && r < entry.row + entry.answer.length);
-        assert.equal(across && down, true, `${puzzle.id} ${r},${c}`);
-      }
-    }
+  }
+  const sizes = Object.fromEntries(days.map((day) => [day, range.days[day][0].size]));
+  assert.ok(sizes.sunday >= sizes.saturday, `${unitId} sunday`);
+  if (range.tier === "full") {
+    assert.ok(sizes.monday < sizes.thursday, unitId);
+    assert.ok(sizes.saturday < sizes.sunday, unitId);
+  }
+  if (range.tier === "mini") {
+    assert.ok(sizes.monday <= 5 && sizes.saturday <= 5, unitId);
+  }
+}
+const firstId = unitOrder[0];
+const lastId = unitOrder[unitOrder.length - 1];
+for (const day of days) {
+  for (const puzzle of pack.ranges[firstId].days[day]) {
+    const answers = new Set([...puzzle.across, ...puzzle.down].map((entry) => entry.answer));
+    assert.equal(answers.has("MORTGAGE"), false, puzzle.id);
+    assert.equal(answers.has("DEED"), false, puzzle.id);
+    assert.equal(answers.has("SIXTY"), false, puzzle.id);
   }
 }
 
 const monday = new Date(2024, 0, 1);
-const first = puzzleForDate(pack, monday);
+const first = puzzleForDate(pack, monday, firstId);
 assert.equal(first.weekday, "monday");
 assert.equal(first.index, 0);
 assert.equal(first.dateKey, "2024-01-01");
+assert.equal(first.unitId, firstId);
 const nextMonday = new Date(2024, 0, 8);
-assert.equal(puzzleForDate(pack, nextMonday).index, 1);
-assert.equal(puzzleForDate(pack, nextMonday).puzzle.id !== first.puzzle.id, true);
-const same = puzzleForDate(pack, monday);
+assert.equal(puzzleForDate(pack, nextMonday, firstId).index, 1);
+assert.equal(puzzleForDate(pack, nextMonday, firstId).puzzle.id !== first.puzzle.id, true);
+const same = puzzleForDate(pack, monday, firstId);
 assert.equal(same.puzzle.id, first.puzzle.id);
+assert.equal(puzzleForDate(pack, monday, "not-a-real-unit").unitId, firstId);
+assert.equal(puzzleForDate(pack, monday).unitId, firstId);
+const saturday = new Date(2024, 0, 6);
 const sunday = new Date(2024, 0, 7);
-assert.equal(puzzleForDate(pack, sunday).weekday, "sunday");
-assert.ok(puzzleForDate(pack, sunday).puzzle.size > puzzleForDate(pack, new Date(2024, 0, 6)).puzzle.size);
+assert.equal(puzzleForDate(pack, sunday, lastId).weekday, "sunday");
+assert.ok(puzzleForDate(pack, saturday, lastId).puzzle.size > puzzleForDate(pack, saturday, firstId).puzzle.size);
+assert.ok(puzzleForDate(pack, sunday, lastId).puzzle.size > puzzleForDate(pack, saturday, lastId).puzzle.size);
 
 let fresh = createState();
 const clean = awardCrossword(fresh, "2026-09-26", true, "monday-1");
@@ -177,4 +217,4 @@ assert.equal(nextDay.state.crossword.streak.count, 2);
 const skipped = awardCrossword(clean.state, "2026-09-28", true, "wednesday-1");
 assert.equal(skipped.state.crossword.streak.count, 1);
 
-console.log(`ok ${questions.length} questions, ${math.length} math, 56 crosswords`);
+console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${unitOrder.length} units`);
