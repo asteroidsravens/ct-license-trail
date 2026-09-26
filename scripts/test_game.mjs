@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import {
   createState, levelInfo, daysUntil, todayKey, previousDay, masteryPercent,
   answerQuestion, dueReviews, sampleExam, scoreExam, recordExam, roadTopics,
-  puzzleForDate, awardCrossword, courseUnitId,
+  puzzleForDate, awardCrossword, completedChapters, pickQuestions,
+  displayStem, ctLawEventsForStop, themeId,
+  portionOf, portionReadiness, chapterStudyPlan, hydratePortions, EXAM_SHAPE,
+  cleanDogName, companion, companionCheer, DEFAULT_DOG_NAME, liveStreak,
+  searchBuddy, tutorUrl, spokenLetters, trailBuddyLines,
+  formatMoney, commissionAmount, residentialConveyance, buyerTaxCredit, millTax, incomeValue,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -32,6 +37,19 @@ const national = bank.topics.filter((t) => t.portion === "national");
 const state = bank.topics.filter((t) => t.portion === "state");
 assert.equal(national.reduce((n, t) => n + t.weight, 0), 80);
 assert.equal(state.reduce((n, t) => n + t.weight, 0), 35);
+assert.equal(EXAM_SHAPE.nationalCount, 80);
+assert.equal(EXAM_SHAPE.nationalMinutes, 120);
+assert.equal(EXAM_SHAPE.stateCount, 35);
+assert.equal(EXAM_SHAPE.stateMinutes, 45);
+assert.equal(EXAM_SHAPE.nationalCount + EXAM_SHAPE.stateCount, 115);
+assert.equal(EXAM_SHAPE.bothMinutes, 165);
+assert.equal(EXAM_SHAPE.passingPercent, 70);
+assert.match(EXAM_SHAPE.bulletin, /PSI/);
+const statePortion = questions.find((item) => item.stem.includes("salesperson state portion"));
+assert.equal(statePortion.choices[statePortion.answer], "35 scored questions and 45 minutes");
+assert.ok(statePortion.choices.includes("30 scored questions and 30 minutes"));
+assert.match(statePortion.source.label, /PSI/);
+assert.match(statePortion.source.url, /psiexams\.com/);
 assert.equal(roadTopics(bank.topics).some((t) => t.id === "math"), false);
 
 for (const topic of bank.topics) {
@@ -89,32 +107,92 @@ assert.equal(recorded.result.percent >= 70, recorded.result.passed);
 assert.equal(recorded.state.streak.count, 1);
 assert.ok(dueReviews(recorded.state, 1_700_000_000_000).length > 0);
 
-const scored = scoreExam(both.ids, Object.fromEntries(both.ids.map((id) => [id, byId[id].answer])), byId);
+const scored = scoreExam(both.ids, Object.fromEntries(both.ids.map((id) => [id, byId[id].answer])), byId, both.sections);
 assert.equal(scored.percent, 100);
 assert.equal(scored.passed, true);
+assert.equal(scored.portions.length, 2);
+assert.ok(scored.portions.every((row) => row.passed));
+const splitAnswers = Object.fromEntries(both.ids.map((id) => [id, byId[id].answer]));
+both.sections.find((section) => section.id === "state").ids.forEach((id) => {
+  splitAnswers[id] = (byId[id].answer + 1) % 4;
+});
+const split = scoreExam(both.ids, splitAnswers, byId, both.sections);
+assert.equal(split.portions.find((row) => row.id === "national").passed, true);
+assert.equal(split.portions.find((row) => row.id === "state").passed, false);
+assert.equal(split.passed, false);
 
 const course = JSON.parse(readFileSync(new URL("../data/course.json", import.meta.url), "utf8"));
 const pack = JSON.parse(readFileSync(new URL("../data/crosswords.json", import.meta.url), "utf8"));
-const unitOrder = course.units.map((unit) => unit.id);
-assert.deepEqual(pack.unitOrder, unitOrder);
-assert.equal(courseUnitId(createState(), course.units), unitOrder[0]);
-const moved = createState();
-moved.courseUnit = unitOrder[3];
-assert.equal(courseUnitId(moved, course.units), unitOrder[3]);
-moved.courseUnit = "retired-syllabus-unit";
-assert.equal(courseUnitId(moved, course.units), unitOrder[0]);
-const unitIndex = Object.fromEntries(unitOrder.map((id, index) => [id, index]));
+const chapterNumbers = course.chapters.map((row) => row.n);
+assert.deepEqual(chapterNumbers, Array.from({ length: 21 }, (_, index) => index + 1));
+assert.deepEqual(course.defaultCompleted, [2, 3, 6, 7, 14, 15, 16, 17, 20]);
+assert.deepEqual(completedChapters(createState(), course), course.defaultCompleted);
+const custom = createState();
+custom.completedChapters = [16, 2, 99];
+assert.deepEqual(completedChapters(custom, course), [2, 16]);
+custom.completedChapters = [];
+assert.deepEqual(completedChapters(custom, course), []);
 for (const item of questions) {
-  assert.equal(typeof unitIndex[item.unit], "number", `${item.id} unit`);
+  assert.equal(item.unit, undefined, `${item.id} unit`);
+  assert.ok(chapterNumbers.includes(item.chapter), `${item.id} chapter`);
 }
+const ctLayer = questions.filter((q) => q.ctLaw);
+assert.ok(ctLayer.length >= 30, `ct law layer ${ctLayer.length}`);
+const eventChapters = new Set(ctLayer.filter((q) => q.event).map((q) => q.chapter));
+for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20, 21]) {
+  assert.ok(eventChapters.has(n), `missing CT law event for chapter ${n}`);
+}
+for (const q of ctLayer) {
+  assert.ok(q.source && q.source.url && q.source.label, q.id);
+  assert.ok(q.flavor.outdoors && q.flavor.adventure && q.flavor.history, q.id);
+  assert.equal(q.flavor.classic, undefined, q.id);
+  assert.equal(displayStem(q, "classic"), q.stem);
+  const outdoors = displayStem(q, "outdoors");
+  assert.equal(outdoors, `${q.flavor.outdoors} ${q.stem}`);
+  assert.equal(outdoors.includes(q.choices[q.answer]), false);
+}
+assert.equal(themeId(createState()), "outdoors");
+assert.equal(createState().settings.dogName, DEFAULT_DOG_NAME);
+assert.equal(cleanDogName("  <Hudson!> "), "Hudson");
+assert.equal(cleanDogName(""), DEFAULT_DOG_NAME);
+assert.equal(companion(createState()).on, true);
+assert.equal(companion({ settings: { dog: false, dogName: "Moss" } }).on, false);
+assert.equal(companionCheer({ settings: { dog: false } }, "2026-09-26"), "");
+assert.ok(companionCheer(createState(), "2026-09-26").includes("Hudson"));
+assert.equal(liveStreak({ count: 4, lastDay: "2026-09-25" }, "2026-09-26"), 4);
+assert.equal(liveStreak({ count: 4, lastDay: "2026-09-01" }, "2026-09-26"), 0);
+const ownershipEvents = ctLawEventsForStop(questions, "ownership", [3, 4, 5], []);
+assert.ok(ownershipEvents.some((q) => q.chapter === 3 && q.ctLaw && q.event));
+assert.equal(ctLawEventsForStop(questions, "ownership", [2], []).length, 0);
+
+const starter = course.defaultCompleted;
+const towns = roadTopics(bank.topics, questions, starter);
+assert.ok(towns.length > 0);
+assert.equal(roadTopics(bank.topics, questions, []).length, 0);
+for (const town of towns) {
+  const ids = pickQuestions(questions, town.id, 3, createState(), () => 0.2, starter);
+  assert.ok(ids.length > 0, town.id);
+  ids.forEach((id) => assert.ok(starter.includes(byId[id].chapter), `${town.id} ${id}`));
+}
+const limited = sampleExam(questions, bank.topics, "national", rng, starter);
+assert.ok(limited.ids.length > 0 && limited.ids.length <= 80);
+assert.equal(limited.everyChapter, false);
+limited.ids.forEach((id) => assert.ok(starter.includes(byId[id].chapter), id));
+const fullNational = sampleExam(questions, bank.topics, "both", rng, null);
+assert.equal(fullNational.everyChapter, true);
+assert.equal(fullNational.ids.length, 115);
 const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const banned = /new york times|\bnyt\b|wall street journal/i;
 let puzzleCount = 0;
-for (const unitId of unitOrder) {
-  const range = pack.ranges[unitId];
-  const limit = unitIndex[unitId];
+assert.ok(pack.packs.default, "default pack");
+assert.ok(pack.packs.all, "all-chapters pack");
+assert.deepEqual([...pack.packs.default.chapters].sort((a, b) => a - b), starter);
+assert.deepEqual(pack.packs.all.chapters, chapterNumbers);
+for (const [packId, range] of Object.entries(pack.packs)) {
+  const allowed = new Set([...range.chapters, 0]);
   for (const day of days) {
-    assert.ok(range.days[day].length >= 8, `${unitId} ${day}`);
+    const need = packId === "default" || packId === "all" ? 8 : 4;
+    assert.ok(range.days[day].length >= need, `${packId} ${day}`);
     for (const puzzle of range.days[day]) {
       puzzleCount += 1;
       assert.equal(banned.test(JSON.stringify(puzzle)), false, puzzle.id);
@@ -126,8 +204,8 @@ for (const unitId of unitOrder) {
         assert.ok(entry.answer.length >= 3, puzzle.id);
         assert.equal(seen.has(entry.answer), false, `${puzzle.id} ${entry.answer}`);
         seen.add(entry.answer);
-        assert.equal(course.words[entry.answer], entry.unit, `${puzzle.id} ${entry.answer}`);
-        assert.ok(unitIndex[entry.unit] <= limit, `${puzzle.id} jumps to ${entry.answer}`);
+        assert.equal(course.words[entry.answer], entry.chapter, `${puzzle.id} ${entry.answer}`);
+        assert.ok(allowed.has(entry.chapter), `${puzzle.id} chapter ${entry.chapter}`);
         let r = entry.row;
         let c = entry.col;
         const across = puzzle.across.includes(entry);
@@ -156,44 +234,41 @@ for (const unitId of unitOrder) {
     }
   }
   const sizes = Object.fromEntries(days.map((day) => [day, range.days[day][0].size]));
-  assert.ok(sizes.sunday >= sizes.saturday, `${unitId} sunday`);
+  assert.ok(sizes.sunday >= sizes.saturday, `${packId} sunday`);
   if (range.tier === "full") {
-    assert.ok(sizes.monday < sizes.thursday, unitId);
-    assert.ok(sizes.saturday < sizes.sunday, unitId);
+    assert.ok(sizes.monday < sizes.thursday, packId);
+    assert.ok(sizes.saturday < sizes.sunday, packId);
   }
   if (range.tier === "mini") {
-    assert.ok(sizes.monday <= 5 && sizes.saturday <= 5, unitId);
+    assert.ok(sizes.monday <= 5 && sizes.saturday <= 5, packId);
   }
 }
-const firstId = unitOrder[0];
-const lastId = unitOrder[unitOrder.length - 1];
 for (const day of days) {
-  for (const puzzle of pack.ranges[firstId].days[day]) {
-    const answers = new Set([...puzzle.across, ...puzzle.down].map((entry) => entry.answer));
-    assert.equal(answers.has("MORTGAGE"), false, puzzle.id);
-    assert.equal(answers.has("DEED"), false, puzzle.id);
-    assert.equal(answers.has("SIXTY"), false, puzzle.id);
+  for (const puzzle of pack.packs.default.days[day]) {
+    const chapters = new Set([...puzzle.across, ...puzzle.down].map((entry) => entry.chapter));
+    assert.equal(chapters.has(12), false, puzzle.id);
+    assert.equal(chapters.has(1), false, puzzle.id);
   }
 }
 
 const monday = new Date(2024, 0, 1);
-const first = puzzleForDate(pack, monday, firstId);
+const first = puzzleForDate(pack, monday, starter);
 assert.equal(first.weekday, "monday");
-assert.equal(first.index, 0);
 assert.equal(first.dateKey, "2024-01-01");
-assert.equal(first.unitId, firstId);
+assert.ok(first.chapters.length > 0);
+assert.ok(first.chapters.every((n) => starter.includes(n)));
 const nextMonday = new Date(2024, 0, 8);
-assert.equal(puzzleForDate(pack, nextMonday, firstId).index, 1);
-assert.equal(puzzleForDate(pack, nextMonday, firstId).puzzle.id !== first.puzzle.id, true);
-const same = puzzleForDate(pack, monday, firstId);
-assert.equal(same.puzzle.id, first.puzzle.id);
-assert.equal(puzzleForDate(pack, monday, "not-a-real-unit").unitId, firstId);
-assert.equal(puzzleForDate(pack, monday).unitId, firstId);
+assert.equal(puzzleForDate(pack, nextMonday, starter).puzzle.id !== first.puzzle.id, true);
+assert.equal(puzzleForDate(pack, monday, starter).puzzle.id, first.puzzle.id);
+assert.ok(puzzleForDate(pack, monday).chapters.every((n) => starter.includes(n)));
+assert.equal(puzzleForDate(pack, monday, []), null);
+const onlyTwo = puzzleForDate(pack, monday, [2]);
+assert.ok(onlyTwo);
+assert.deepEqual(onlyTwo.chapters, [2]);
 const saturday = new Date(2024, 0, 6);
 const sunday = new Date(2024, 0, 7);
-assert.equal(puzzleForDate(pack, sunday, lastId).weekday, "sunday");
-assert.ok(puzzleForDate(pack, saturday, lastId).puzzle.size > puzzleForDate(pack, saturday, firstId).puzzle.size);
-assert.ok(puzzleForDate(pack, sunday, lastId).puzzle.size > puzzleForDate(pack, saturday, lastId).puzzle.size);
+assert.equal(puzzleForDate(pack, sunday, chapterNumbers).weekday, "sunday");
+assert.ok(puzzleForDate(pack, sunday, chapterNumbers).puzzle.size > puzzleForDate(pack, saturday, chapterNumbers).puzzle.size);
 
 let fresh = createState();
 const clean = awardCrossword(fresh, "2026-09-26", true, "monday-1");
@@ -217,4 +292,83 @@ assert.equal(nextDay.state.crossword.streak.count, 2);
 const skipped = awardCrossword(clean.state, "2026-09-28", true, "wednesday-1");
 assert.equal(skipped.state.crossword.streak.count, 1);
 
-console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${unitOrder.length} units`);
+const ctQuestion = questions.find((q) => q.ctLaw);
+const nationalQuestion = questions.find((q) => q.topic === "contracts" && !q.ctLaw);
+assert.equal(portionOf(ctQuestion), "state");
+assert.equal(portionOf(nationalQuestion), "national");
+let pace = createState();
+pace = answerQuestion(pace, nationalQuestion, nationalQuestion.answer).state;
+pace = answerQuestion(pace, ctQuestion, (ctQuestion.answer + 1) % 4).state;
+const ready = portionReadiness(pace);
+assert.equal(ready.find((row) => row.id === "national").correct, 1);
+assert.equal(ready.find((row) => row.id === "state").correct, 0);
+assert.equal(ready.find((row) => row.id === "state").seen, 1);
+assert.equal(ready.find((row) => row.id === "national").status, "Early");
+const plan3 = chapterStudyPlan(questions, 3, () => 0.2);
+assert.ok(plan3.principles.length > 0);
+assert.ok(plan3.ct.length > 0);
+assert.ok(plan3.quiz.length > 0);
+assert.ok(plan3.ct.every((id) => portionOf(byId[id]) === "state"));
+assert.ok(plan3.principles.every((id) => portionOf(byId[id]) === "national"));
+const plan2 = chapterStudyPlan(questions, 2, () => 0.2);
+assert.equal(plan2.ct.length, 0);
+assert.ok(plan2.principles.length > 0);
+const seeded = hydratePortions(createState(), questions);
+assert.equal(portionReadiness(seeded)[0].seen, 0);
+
+const glossary = JSON.parse(readFileSync(new URL("../data/glossary.json", import.meta.url), "utf8")).entries;
+const tutor = JSON.parse(readFileSync(new URL("../data/tutor.json", import.meta.url), "utf8"));
+assert.equal(tutor.talkTutorUrl, "");
+assert.equal(tutorUrl(tutor), "");
+assert.equal(tutorUrl({ talkTutorUrl: "javascript:alert(1)" }), "");
+assert.equal(tutorUrl({ askTutorUrl: "https://example.com/tutor" }), "https://example.com/tutor");
+assert.equal(tutorUrl({ talkTutorUrl: "https://example.com/trail" }), "https://example.com/trail");
+assert.equal(createState().settings.readAloud, false);
+assert.equal(spokenLetters("an easement."), "EASEMENT");
+assert.equal(spokenLetters("the deed"), "DEED");
+const easement = searchBuddy("what is an easement", glossary, questions);
+assert.equal(easement.kind, "glossary");
+assert.equal(easement.term, "EASEMENT");
+assert.match(easement.text, /right to use/i);
+assert.equal(easement.related.length, 3);
+assert.ok(easement.related.every((id) => /easement/i.test(`${byId[id].stem} ${byId[id].explanation}`)));
+const dual = searchBuddy("CT dual agency", glossary, questions);
+assert.equal(dual.kind, "law");
+assert.match(`${dual.title} ${dual.text}`, /dual[- ]agency/i);
+assert.ok(dual.source?.url && dual.source.label);
+assert.equal(dual.related.length, 3);
+assert.ok(dual.related.every((id) => /dual[- ]agency/i.test(`${byId[id].stem} ${byId[id].explanation}`)));
+const voice = trailBuddyLines("what is an easement", easement);
+assert.match(voice.lead, /pack|notes|map/i);
+assert.match(voice.nudge, /Quiz me on this/i);
+const miss = trailBuddyLines("zzzznotaterm", null);
+assert.match(miss.lead, /glossary|pack/i);
+assert.equal(/counselor/i.test(`${voice.lead} ${voice.nudge} ${miss.lead} ${miss.nudge}`), false);
+const appSource = readFileSync(new URL("../js/app.js", import.meta.url), "utf8");
+assert.match(appSource, /study helper, not a counselor/);
+assert.match(appSource, /Hands-free tips/);
+assert.match(appSource, /Talk to my tutor/);
+assert.match(appSource, /speechSynthesis/);
+assert.match(appSource, /class="stepnav"/);
+assert.match(appSource, /data-field="commission-price"/);
+
+assert.equal(formatMoney(16250), "$16,250");
+assert.equal(formatMoney(10.5), "$10.50");
+assert.equal(commissionAmount(325000, 5), 16250);
+assert.deepEqual(residentialConveyance(1500), { state: 0, municipal: 0, total: 0, applies: false });
+assert.deepEqual(residentialConveyance(250000), { state: 1875, municipal: 625, total: 2500, applies: true });
+assert.deepEqual(residentialConveyance(900000), { state: 7250, municipal: 2250, total: 9500, applies: true });
+assert.deepEqual(residentialConveyance(2600000), { state: 29500, municipal: 6500, total: 36000, applies: true });
+assert.deepEqual(buyerTaxCredit(3600, 75), { daily: 10, buyerDays: 285, credit: 2850 });
+assert.equal(buyerTaxCredit(3600, 361), null);
+assert.equal(millTax(140000, 20), 2800);
+assert.equal(millTax(150000, 25), 3750);
+assert.equal(incomeValue(24000, 8), 300000);
+assert.equal(incomeValue(24000, 0), null);
+
+const pagesYml = readFileSync(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8");
+assert.equal(pagesYml.includes("enablement"), false);
+assert.match(pagesYml, /cancel-in-progress:\s*true/);
+assert.equal(readFileSync(new URL("../.nojekyll", import.meta.url), "utf8"), "");
+
+console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${chapterNumbers.length} chapters`);

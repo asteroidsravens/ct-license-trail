@@ -1,0 +1,32 @@
+# Credits
+
+CT License Trail does not vendor a crossword engine, a PWA starter, or a speech library. The grid, the study text, the clues, and the illustrations are original to this project. No copyrighted game art, textbook text, or paid-prep questions are included.
+
+Official Connecticut and federal sources linked from the question bank are cited in the README. Those pages are references, not copied into the app.
+
+## Deploy workflow
+
+GitHub Pages is published by `.github/workflows/pages.yml`. That workflow calls these MIT-licensed actions. They are not copied into this repository. GitHub fetches them when the workflow runs.
+
+| Action | Pin | License | Repository |
+| --- | --- | --- | --- |
+| actions/checkout | v4 | MIT | https://github.com/actions/checkout |
+| actions/configure-pages | v5 | MIT | https://github.com/actions/configure-pages |
+| actions/upload-pages-artifact | v3 | MIT | https://github.com/actions/upload-pages-artifact |
+| actions/deploy-pages | v4 | MIT | https://github.com/actions/deploy-pages |
+
+The MIT license text for each action is in that repository.
+
+## Owner repositories used as patterns
+
+These three public repositories belong to the same owner. Patterns were reused. Story text, images, and bylines were not copied into this project, and none of those repositories is vendored here.
+
+| Repository | Pattern used here | License |
+| --- | --- | --- |
+| https://github.com/asteroidsravens/the-immortal-case | GitHub Actions Pages workflow without a Pages-enablement flag, and a numbered sticky step walk for a chapter (principles, Connecticut, quiz) | MIT |
+| https://github.com/asteroidsravens/the-slow-boil | Project-site address `username.github.io/repository/`, and a single-page math sheet of labeled number fields with a live readout | No license file in that repository. Nothing from it was copied into this tree. |
+| https://github.com/asteroidsravens/asteroidsravens.github.io | Empty `.nojekyll` so GitHub Pages will not run Jekyll. That user site stays its own site. This app is a separate project URL. | MIT |
+
+## Browser APIs
+
+Speech-to-text uses the browser's Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`). Read-aloud uses `speechSynthesis`. Those are built into the browser. This project does not ship a third-party speech package.
