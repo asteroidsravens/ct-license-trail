@@ -13,6 +13,7 @@ Open the site, or run it locally (see below). Progress stays in this browser (`l
 - **Math Pass.** Commission, splits, seller proceeds, prorations, Connecticut conveyance tax, loan-to-value, PITI, area, cap rate, equity, points, and a few related drills. The steps appear after you answer.
 - **Mock exam.** National portion: 80 questions, 120 minutes. Connecticut portion: 35 questions, 45 minutes. Both: 115 questions, 165 minutes. The practice pass line is 70 percent, matching the salesperson bulletin. The clock pauses if you leave the page. The real exam clock does not.
 - **Review.** Missed questions come back immediately. A correct answer waits longer the next time.
+- **Daily crossword.** A new original grid each calendar day. Monday is the smallest; clues get harder through Saturday; Sunday is larger and themed around exam vocabulary. Tap a square to select it, tap again to switch across and down. Check or reveal a letter, a word, or the whole puzzle. The timer pauses when you leave. A clean solve adds 40 XP and one of each supply that is not already full. A solve that used a reveal adds 12 XP. The crossword streak and the in-progress grid stay on this phone.
 - **Exam date.** Type your own date under Exam date and sound. Change it whenever you want. Sound is off until you turn it on.
 
 The app is an installable PWA. Add it to your home screen after it loads once; the service worker keeps the question bank available offline.
@@ -27,10 +28,11 @@ python3 -m http.server 8080
 
 Then open `http://127.0.0.1:8080/`.
 
-Check the game rules and the bank:
+Check the game rules, the bank, and the crossword library:
 
 ```bash
 node scripts/test_game.mjs
+python3 scripts/build_crosswords.py
 ```
 
 ## Add questions

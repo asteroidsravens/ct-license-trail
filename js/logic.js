@@ -52,7 +52,58 @@ export function createState() {
     session: null,
     introSeen: false,
     lastScreen: "home",
+    crossword: {
+      streak: { count: 0, lastDay: null },
+      solved: {},
+      progress: {},
+    },
   };
+}
+
+const WEEKDAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+export function puzzleForDate(pack, date = new Date()) {
+  const utc = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const epoch = Date.UTC(2024, 0, 1);
+  const days = Math.floor((utc - epoch) / 86400000);
+  const week = Math.floor(days / 7);
+  const weekday = WEEKDAY_NAMES[date.getDay()];
+  const pool = pack.days[weekday];
+  const index = ((week % pool.length) + pool.length) % pool.length;
+  return { puzzle: pool[index], weekday, dateKey: todayKey(date), index };
+}
+
+export function awardCrossword(state, day, clean, puzzleId) {
+  const next = structuredClone(state);
+  if (!next.crossword) {
+    next.crossword = { streak: { count: 0, lastDay: null }, solved: {}, progress: {} };
+  }
+  const book = next.crossword;
+  book.streak = book.streak || { count: 0, lastDay: null };
+  book.solved = book.solved || {};
+  if (book.solved[day]) {
+    return { state: next, awarded: false, xpGain: 0, supplyDelta: 0, clean: Boolean(book.solved[day].clean) };
+  }
+  const xpGain = clean ? 40 : 12;
+  next.xp += xpGain;
+  let supplyDelta = 0;
+  if (clean) {
+    for (const row of SUPPLIES) {
+      if (next.supplies[row.id] < SUPPLY_MAX) {
+        next.supplies[row.id] += 1;
+        supplyDelta += 1;
+      }
+    }
+  }
+  const streak = book.streak;
+  if (streak.lastDay !== day) {
+    if (streak.lastDay === previousDay(day)) streak.count += 1;
+    else streak.count = 1;
+    streak.lastDay = day;
+  }
+  book.solved[day] = { id: puzzleId, clean, xp: xpGain };
+  touchStreak(next, day);
+  return { state: next, awarded: true, xpGain, supplyDelta, clean };
 }
 
 export function todayKey(date = new Date()) {

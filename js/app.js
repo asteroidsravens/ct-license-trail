@@ -1,7 +1,7 @@
 import {
   STORAGE_KEY, SUPPLIES, SUPPLY_MAX, createState, levelInfo, daysUntil, todayKey,
   masteryPercent, answerQuestion, dueReviews, pickQuestions, sampleExam, recordExam,
-  roadTopics,
+  roadTopics, puzzleForDate, awardCrossword,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -13,6 +13,7 @@ const countPill = document.querySelector("#count-pill");
 
 let bank = null;
 let byId = {};
+let crosswords = null;
 let state = loadState();
 let screen = "home";
 let calcValue = "0";
@@ -24,13 +25,19 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return createState();
     const saved = JSON.parse(raw);
+    const fresh = createState();
     return {
-      ...createState(),
+      ...fresh,
       ...saved,
-      supplies: { ...createState().supplies, ...(saved.supplies || {}) },
+      supplies: { ...fresh.supplies, ...(saved.supplies || {}) },
       settings: { sound: false, ...(saved.settings || {}) },
-      streak: { ...createState().streak, ...(saved.streak || {}) },
-      stats: { ...createState().stats, ...(saved.stats || {}) },
+      streak: { ...fresh.streak, ...(saved.streak || {}) },
+      stats: { ...fresh.stats, ...(saved.stats || {}) },
+      crossword: {
+        streak: { ...fresh.crossword.streak, ...(saved.crossword?.streak || {}) },
+        solved: { ...(saved.crossword?.solved || {}) },
+        progress: { ...(saved.crossword?.progress || {}) },
+      },
     };
   } catch {
     return createState();
@@ -87,13 +94,16 @@ function paintChrome() {
       || (tab === "map" && screen === "map")
       || (tab === "math" && (screen === "math" || (screen === "question" && quizKind === "math")))
       || (tab === "exam" && ["exam", "mock"].includes(screen))
-      || (tab === "review" && (screen === "review" || (screen === "question" && quizKind === "review")));
+      || (tab === "review" && (screen === "review" || (screen === "question" && quizKind === "review")))
+      || (tab === "daily" && screen === "daily");
     if (on) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
 }
 
 function go(next) {
+  if (screen === "daily" && next !== "daily") freezeDaily();
+  if (screen === "mock" && next !== "mock") freezeMock();
   screen = next;
   state.lastScreen = next;
   save();
@@ -171,6 +181,7 @@ function render() {
     review: viewReviewHome,
     settings: viewSettings,
     about: viewAbout,
+    daily: viewDaily,
   };
   (views[screen] || viewHome)();
   const heading = main.querySelector("h2, .stem");
@@ -197,6 +208,7 @@ function viewHome() {
       <div class="stack">
         ${resumeMock ? `<button class="btn btn-primary" data-act="resume-mock">Resume mock exam</button>` : ""}
         <button class="btn btn-primary" data-act="continue">${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
+        <button class="btn btn-quiet" data-act="daily">${state.crossword?.solved?.[todayKey()] ? "Today's crossword · solved" : "Today's crossword"}</button>
         <button class="btn btn-quiet" data-act="settings">Exam date and sound</button>
       </div>
     </section>
@@ -450,6 +462,7 @@ function viewAbout() {
       <h2>What this is</h2>
       <p>CT License Trail is an unofficial study aid for an adult preparing for the Connecticut real estate salesperson exam. The road, town names, and drawings are original. It is not a PSI product and it is not affiliated with the Department of Consumer Protection.</p>
       <p>Questions were written for this project from public official sources. They are not copied from a textbook or a commercial prep course. If a Connecticut figure could not be checked, it was left out.</p>
+      <p>The daily crossword is original too: new grid each calendar day, written for this game, with no newspaper puzzle or name behind it. A Connecticut fact in a clue uses the same public sources as the questions.</p>
       <h2>Sources</h2>
       <ul>
         <li><a href="https://test-takers.psiexams.com/ctre">PSI Connecticut real estate candidate bulletin</a> (content outline and exam timing, updated November 13, 2025)</li>
@@ -507,6 +520,410 @@ function viewCalc() {
 
 let calcReturn = "home";
 
+function crosswordBook() {
+  if (!state.crossword) state.crossword = createState().crossword;
+  return state.crossword;
+}
+
+function todayPuzzle() {
+  return puzzleForDate(crosswords, new Date());
+}
+
+function isBlack(puzzle, r, c) {
+  return puzzle.grid[r][c] === "#";
+}
+
+function cellsOf(entry, dir) {
+  const cells = [];
+  for (let i = 0; i < entry.answer.length; i += 1) {
+    cells.push(dir === "across" ? [entry.row, entry.col + i] : [entry.row + i, entry.col]);
+  }
+  return cells;
+}
+
+function entryAt(puzzle, r, c, dir) {
+  const list = dir === "across" ? puzzle.across : puzzle.down;
+  return list.find((entry) => cellsOf(entry, dir).some(([rr, cc]) => rr === r && cc === c)) || null;
+}
+
+function firstWhite(puzzle) {
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (!isBlack(puzzle, r, c)) return { r, c };
+    }
+  }
+  return { r: 0, c: 0 };
+}
+
+function ensureProgress(puzzle, day) {
+  const book = crosswordBook();
+  let prog = book.progress[day];
+  const size = puzzle.size * puzzle.size;
+  if (!prog || prog.id !== puzzle.id || !Array.isArray(prog.letters) || prog.letters.length !== size) {
+    const start = firstWhite(puzzle);
+    prog = {
+      id: puzzle.id,
+      letters: Array(size).fill(""),
+      bad: Array(size).fill(false),
+      revealed: Array(size).fill(false),
+      revealedAny: false,
+      row: start.r,
+      col: start.c,
+      dir: "across",
+      seconds: 0,
+      running: false,
+      lastTick: Date.now(),
+      done: false,
+    };
+    book.progress[day] = prog;
+  }
+  if (book.solved[day] && !prog.done) {
+    prog.done = true;
+    prog.running = false;
+    for (let r = 0; r < puzzle.size; r += 1) {
+      for (let c = 0; c < puzzle.size; c += 1) {
+        if (!isBlack(puzzle, r, c)) prog.letters[r * puzzle.size + c] = puzzle.grid[r][c];
+      }
+    }
+  }
+  if (!entryAt(puzzle, prog.row, prog.col, prog.dir)) {
+    const other = prog.dir === "across" ? "down" : "across";
+    if (entryAt(puzzle, prog.row, prog.col, other)) prog.dir = other;
+  }
+  return prog;
+}
+
+function dailyElapsed(prog, now = Date.now()) {
+  let seconds = prog.seconds || 0;
+  if (prog.running) seconds += Math.max(0, Math.floor((now - prog.lastTick) / 1000));
+  return seconds;
+}
+
+function formatSeconds(total) {
+  const safe = Math.max(0, total || 0);
+  const m = Math.floor(safe / 60);
+  const s = safe % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function rollDaily(now = Date.now()) {
+  const prog = state.crossword?.progress?.[todayKey()];
+  if (!prog?.running) return;
+  const add = Math.max(0, Math.floor((now - prog.lastTick) / 1000));
+  if (add > 0) {
+    prog.seconds += add;
+    prog.lastTick = now;
+  }
+}
+
+function freezeDaily(now = Date.now()) {
+  const prog = state.crossword?.progress?.[todayKey()];
+  if (!prog?.running) return;
+  rollDaily(now);
+  prog.running = false;
+  prog.lastTick = now;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  paintChrome();
+}
+
+function resumeDaily(now = Date.now()) {
+  if (!crosswords) return;
+  const picked = todayPuzzle();
+  const prog = ensureProgress(picked.puzzle, picked.dateKey);
+  if (prog.done) return;
+  prog.running = true;
+  prog.lastTick = now;
+}
+
+function paintDaily() {
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  const entry = entryAt(puzzle, prog.row, prog.col, prog.dir);
+  const wordCells = new Set((entry ? cellsOf(entry, prog.dir) : []).map(([r, c]) => `${r},${c}`));
+  main.querySelectorAll(".xw-cell[data-r]").forEach((cell) => {
+    const r = Number(cell.dataset.r);
+    const c = Number(cell.dataset.c);
+    const index = r * puzzle.size + c;
+    const face = cell.querySelector(".xw-face");
+    if (face) face.textContent = prog.letters[index] || "";
+    cell.classList.toggle("xw-on", wordCells.has(`${r},${c}`));
+    cell.classList.toggle("xw-cur", r === prog.row && c === prog.col);
+    cell.classList.toggle("xw-bad", Boolean(prog.bad[index]));
+    cell.classList.toggle("xw-revealed", Boolean(prog.revealed[index]));
+    const num = puzzle.numbers[r][c] ? ` ${puzzle.numbers[r][c]}` : "";
+    cell.setAttribute("aria-label", `Row ${r + 1}, column ${c + 1}${num}, ${prog.letters[index] || "empty"}`);
+    if (r === prog.row && c === prog.col) cell.setAttribute("aria-selected", "true");
+    else cell.removeAttribute("aria-selected");
+  });
+  const clue = main.querySelector(".xw-clue");
+  if (clue && entry) {
+    const source = entry.source
+      ? ` <a href="${esc(entry.source.url)}" target="_blank" rel="noopener noreferrer">${esc(entry.source.label)}</a>`
+      : "";
+    clue.innerHTML = `<strong>${entry.n} ${prog.dir === "across" ? "Across" : "Down"}.</strong> ${esc(entry.clue)}${source}`;
+  }
+  const time = main.querySelector(".xw-time");
+  if (time) time.textContent = formatSeconds(dailyElapsed(prog));
+  const banner = main.querySelector(".xw-banner");
+  if (banner) {
+    const solved = state.crossword.solved[picked.dateKey];
+    banner.hidden = !prog.done;
+    if (prog.done && solved) {
+      banner.textContent = solved.clean
+        ? `Solved clean. +${solved.xp} XP, and a supply wherever one fit.`
+        : `Solved. +${solved.xp} XP. A reveal skips the supply bonus.`;
+    } else if (prog.done) {
+      banner.textContent = "Solved.";
+    }
+  }
+  const streak = main.querySelector(".xw-streak");
+  if (streak) streak.textContent = `crossword streak ${state.crossword.streak?.count || 0}`;
+}
+
+function viewDaily() {
+  if (!crosswords) {
+    main.innerHTML = `<section class="card"><h2>The crossword file did not load.</h2><p>Check that data/crosswords.json is next to this page, then reload.</p></section>`;
+    return;
+  }
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  if (!prog.done) resumeDaily();
+  const n = puzzle.size;
+  const cells = [];
+  for (let r = 0; r < n; r += 1) {
+    for (let c = 0; c < n; c += 1) {
+      if (isBlack(puzzle, r, c)) {
+        cells.push(`<div class="xw-cell xw-black" role="presentation"></div>`);
+      } else {
+        const num = puzzle.numbers[r][c];
+        cells.push(`<button type="button" class="xw-cell" data-r="${r}" data-c="${c}" data-cell="${r},${c}">${num ? `<span class="xw-num">${num}</span>` : ""}<span class="xw-face"></span></button>`);
+      }
+    }
+  }
+  const list = (dir) => (dir === "across" ? puzzle.across : puzzle.down)
+    .map((entry) => `<li><strong>${entry.n}.</strong> ${esc(entry.clue)}</li>`)
+    .join("");
+  const keyRows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
+  main.innerHTML = `
+    <div class="xw">
+      <div class="xw-scroll">
+        <section class="card xw-head">
+          <p class="kicker">${esc(picked.weekday)} · ${esc(picked.dateKey)}</p>
+          <h2>${esc(puzzle.title)}</h2>
+          <p class="lede">${esc(puzzle.blurb)}</p>
+          <p class="xw-meta"><span class="xw-time" aria-label="Elapsed time">0:00</span> · <span class="xw-streak">crossword streak 0</span></p>
+          <p class="xw-banner note" hidden></p>
+        </section>
+        <div class="xw-grid" role="grid" aria-label="${esc(puzzle.title)}" style="grid-template-columns: repeat(${n}, minmax(0, 1fr))">${cells.join("")}</div>
+        <details class="card xw-all">
+          <summary>All clues</summary>
+          <h3>Across</h3>
+          <ol class="xw-list">${list("across")}</ol>
+          <h3>Down</h3>
+          <ol class="xw-list">${list("down")}</ol>
+        </details>
+      </div>
+      <div class="xw-dock">
+        <p class="xw-clue"></p>
+        <div class="xw-board" aria-label="Keyboard">
+          ${keyRows.map((row) => `<div class="xw-keyrow">${[...row].map((ch) => `<button type="button" data-xw="${ch}" aria-label="${ch}">${ch}</button>`).join("")}</div>`).join("")}
+          <div class="xw-keyrow xw-keyrow-wide">
+            <button type="button" data-xw="dir" aria-label="Toggle direction">Direction</button>
+            <button type="button" data-xw="bksp" aria-label="Backspace">Delete</button>
+          </div>
+        </div>
+        <div class="xw-tools">
+          <button type="button" data-act="xw-check-letter">Check letter</button>
+          <button type="button" data-act="xw-check-word">Check word</button>
+          <button type="button" data-act="xw-check-puzzle">Check puzzle</button>
+          <button type="button" data-act="xw-reveal-letter">Reveal letter</button>
+          <button type="button" data-act="xw-reveal-word">Reveal word</button>
+          <button type="button" data-act="xw-reveal-puzzle">Reveal puzzle</button>
+        </div>
+      </div>
+    </div>`;
+  paintDaily();
+  window.clearInterval(timerHandle);
+  timerHandle = window.setInterval(() => {
+    if (screen !== "daily") return;
+    const current = state.crossword?.progress?.[picked.dateKey];
+    if (!current?.running) return;
+    rollDaily();
+    const time = main.querySelector(".xw-time");
+    if (time) time.textContent = formatSeconds(current.seconds || 0);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, 1000);
+}
+
+function moveInEntry(puzzle, prog, delta) {
+  const entry = entryAt(puzzle, prog.row, prog.col, prog.dir);
+  if (!entry) return;
+  const cells = cellsOf(entry, prog.dir);
+  const at = cells.findIndex(([r, c]) => r === prog.row && c === prog.col);
+  const next = cells[at + delta];
+  if (!next) return;
+  prog.row = next[0];
+  prog.col = next[1];
+}
+
+function markChecked(puzzle, prog, cells) {
+  for (const [r, c] of cells) {
+    const index = r * puzzle.size + c;
+    const have = prog.letters[index];
+    prog.bad[index] = Boolean(have) && have !== puzzle.grid[r][c];
+  }
+}
+
+function revealCells(puzzle, prog, cells) {
+  for (const [r, c] of cells) {
+    const index = r * puzzle.size + c;
+    const need = puzzle.grid[r][c];
+    if (prog.letters[index] !== need) prog.revealedAny = true;
+    prog.letters[index] = need;
+    prog.revealed[index] = true;
+    prog.bad[index] = false;
+  }
+}
+
+function allWhiteCells(puzzle) {
+  const cells = [];
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (!isBlack(puzzle, r, c)) cells.push([r, c]);
+    }
+  }
+  return cells;
+}
+
+function gridComplete(puzzle, prog) {
+  for (let r = 0; r < puzzle.size; r += 1) {
+    for (let c = 0; c < puzzle.size; c += 1) {
+      if (isBlack(puzzle, r, c)) continue;
+      if (prog.letters[r * puzzle.size + c] !== puzzle.grid[r][c]) return false;
+    }
+  }
+  return true;
+}
+
+function finishIfSolved(puzzle, prog, day) {
+  if (prog.done || !gridComplete(puzzle, prog)) return;
+  rollDaily();
+  prog.done = true;
+  prog.running = false;
+  const result = awardCrossword(state, day, !prog.revealedAny, puzzle.id);
+  state = result.state;
+  if (result.awarded) {
+    const supply = result.supplyDelta ? ` Supplies +${result.supplyDelta}.` : "";
+    say(result.clean
+      ? `Crossword solved. +${result.xpGain} XP.${supply}`
+      : `Crossword solved with reveals. +${result.xpGain} XP.`);
+  }
+}
+
+function selectCell(r, c) {
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  if (isBlack(puzzle, r, c)) return;
+  if (prog.row === r && prog.col === c) {
+    const other = prog.dir === "across" ? "down" : "across";
+    if (entryAt(puzzle, r, c, other)) prog.dir = other;
+  } else {
+    prog.row = r;
+    prog.col = c;
+    if (!entryAt(puzzle, r, c, prog.dir)) {
+      const other = prog.dir === "across" ? "down" : "across";
+      if (entryAt(puzzle, r, c, other)) prog.dir = other;
+    }
+  }
+  save();
+  paintDaily();
+}
+
+function xwType(letter) {
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  if (prog.done) return;
+  const index = prog.row * puzzle.size + prog.col;
+  prog.letters[index] = letter;
+  prog.bad[index] = false;
+  if (letter !== puzzle.grid[prog.row][prog.col]) prog.revealed[index] = false;
+  moveInEntry(puzzle, prog, 1);
+  finishIfSolved(puzzle, prog, picked.dateKey);
+  save();
+  paintDaily();
+}
+
+function xwBackspace() {
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  if (prog.done) return;
+  const index = prog.row * puzzle.size + prog.col;
+  if (prog.letters[index]) {
+    prog.letters[index] = "";
+    prog.bad[index] = false;
+    prog.revealed[index] = false;
+  } else {
+    moveInEntry(puzzle, prog, -1);
+    const prev = prog.row * puzzle.size + prog.col;
+    prog.letters[prev] = "";
+    prog.bad[prev] = false;
+    prog.revealed[prev] = false;
+  }
+  save();
+  paintDaily();
+}
+
+function xwToggle() {
+  const picked = todayPuzzle();
+  const prog = ensureProgress(picked.puzzle, picked.dateKey);
+  const other = prog.dir === "across" ? "down" : "across";
+  if (entryAt(picked.puzzle, prog.row, prog.col, other)) prog.dir = other;
+  save();
+  paintDaily();
+}
+
+function xwTool(kind) {
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  if (prog.done && kind.startsWith("check")) {
+    paintDaily();
+    return;
+  }
+  const entry = entryAt(puzzle, prog.row, prog.col, prog.dir);
+  const one = [[prog.row, prog.col]];
+  const word = entry ? cellsOf(entry, prog.dir) : one;
+  if (kind === "check-letter") markChecked(puzzle, prog, one);
+  else if (kind === "check-word") markChecked(puzzle, prog, word);
+  else if (kind === "check-puzzle") markChecked(puzzle, prog, allWhiteCells(puzzle));
+  else if (kind === "reveal-letter") revealCells(puzzle, prog, one);
+  else if (kind === "reveal-word") revealCells(puzzle, prog, word);
+  else if (kind === "reveal-puzzle") revealCells(puzzle, prog, allWhiteCells(puzzle));
+  if (kind.startsWith("reveal")) finishIfSolved(puzzle, prog, picked.dateKey);
+  save();
+  paintDaily();
+}
+
+function xwArrow(key) {
+  const picked = todayPuzzle();
+  const puzzle = picked.puzzle;
+  const prog = ensureProgress(puzzle, picked.dateKey);
+  const step = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[key];
+  const nr = prog.row + step[0];
+  const nc = prog.col + step[1];
+  if (nr < 0 || nc < 0 || nr >= puzzle.size || nc >= puzzle.size || isBlack(puzzle, nr, nc)) return;
+  prog.row = nr;
+  prog.col = nc;
+  prog.dir = key === "ArrowLeft" || key === "ArrowRight" ? "across" : "down";
+  save();
+  paintDaily();
+}
+
 function onClick(event) {
   const button = event.target.closest("button");
   if (!button) return;
@@ -531,6 +948,17 @@ function onClick(event) {
     render();
   }
   if (button.dataset.key) pressCalc(button.dataset.key);
+  if (button.dataset.cell) {
+    const [r, c] = button.dataset.cell.split(",").map(Number);
+    selectCell(r, c);
+    return;
+  }
+  if (button.dataset.xw) {
+    if (button.dataset.xw === "bksp") xwBackspace();
+    else if (button.dataset.xw === "dir") xwToggle();
+    else xwType(button.dataset.xw);
+    return;
+  }
   if (!act) return;
   if (act === "continue") {
     if (state.session) go("question");
@@ -576,8 +1004,10 @@ function onClick(event) {
       save();
       go("home");
     }
-  } else if (act === "about") go("about");
+  }   else if (act === "about") go("about");
   else if (act === "home") go("home");
+  else if (act === "daily") go("daily");
+  else if (act.startsWith("xw-")) xwTool(act.slice(3));
   else if (act === "mock-prev") stepMock(-1);
   else if (act === "mock-next") stepMock(1);
   else if (act === "mock-flag") {
@@ -731,6 +1161,29 @@ function compute(expr) {
 }
 
 function onKey(event) {
+  if (screen === "daily" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    if (event.target && (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA")) return;
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      xwBackspace();
+      return;
+    }
+    if (event.key === " ") {
+      event.preventDefault();
+      xwToggle();
+      return;
+    }
+    if (event.key.startsWith("Arrow")) {
+      event.preventDefault();
+      xwArrow(event.key);
+      return;
+    }
+    if (/^[a-zA-Z]$/.test(event.key)) {
+      event.preventDefault();
+      xwType(event.key.toUpperCase());
+      return;
+    }
+  }
   if (screen === "question" && state.session?.phase === "ask" && ["1", "2", "3", "4"].includes(event.key)) {
     chooseAnswer(Number(event.key) - 1);
   }
@@ -740,24 +1193,34 @@ document.querySelector(".tabs").addEventListener("click", onClick);
 main.addEventListener("click", onClick);
 document.addEventListener("keydown", onKey);
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden) freezeMock();
-  else if (screen === "mock") resumeMock();
+  if (document.hidden) {
+    freezeMock();
+    freezeDaily();
+  } else if (screen === "mock") resumeMock();
+  else if (screen === "daily") resumeDaily();
 });
 
 async function boot() {
-  const response = await fetch("./data/questions.json");
-  bank = await response.json();
+  const [questionResponse, crosswordResponse] = await Promise.all([
+    fetch("./data/questions.json"),
+    fetch("./data/crosswords.json"),
+  ]);
+  bank = await questionResponse.json();
+  crosswords = await crosswordResponse.json();
   byId = Object.fromEntries(bank.questions.map((q) => [q.id, q]));
   if (state.mock && !state.mock.submitted && state.mock.running) {
     state.mock.running = false;
     state.mock.lastTick = Date.now();
   }
+  Object.values(state.crossword?.progress || {}).forEach((prog) => {
+    prog.running = false;
+  });
   const saved = state.lastScreen || "home";
   if (saved === "question" && state.session?.ids?.length) screen = "question";
   else if (saved === "mock" && state.mock) {
     if (!state.mock.submitted) resumeMock();
     screen = "mock";
-  } else if (["home", "map", "math", "exam", "review", "settings", "about"].includes(saved)) screen = saved;
+  } else if (["home", "map", "math", "exam", "review", "settings", "about", "daily"].includes(saved)) screen = saved;
   else screen = "home";
   render();
   if ("serviceWorker" in navigator) {

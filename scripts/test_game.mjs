@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import {
   createState, levelInfo, daysUntil, todayKey, previousDay, masteryPercent,
   answerQuestion, dueReviews, sampleExam, scoreExam, recordExam, roadTopics,
+  puzzleForDate, awardCrossword,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -92,4 +93,88 @@ const scored = scoreExam(both.ids, Object.fromEntries(both.ids.map((id) => [id, 
 assert.equal(scored.percent, 100);
 assert.equal(scored.passed, true);
 
-console.log(`ok ${questions.length} questions, ${math.length} math`);
+const pack = JSON.parse(readFileSync(new URL("../data/crosswords.json", import.meta.url), "utf8"));
+const order = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+for (const day of order) {
+  assert.ok(pack.days[day].length >= 8, `${day} puzzles`);
+}
+assert.ok(pack.days.monday[0].size < pack.days.thursday[0].size);
+assert.ok(pack.days.saturday[0].size < pack.days.sunday[0].size);
+assert.equal(pack.days.sunday[0].size > pack.days.friday[0].size, true);
+const banned = /new york times|\\bnyt\\b|wall street journal/i;
+for (const day of order) {
+  for (const puzzle of pack.days[day]) {
+    assert.equal(banned.test(JSON.stringify(puzzle)), false, puzzle.id);
+    const n = puzzle.size;
+    const grid = puzzle.grid;
+    assert.equal(grid.length, n);
+    const seen = new Set();
+    for (const entry of [...puzzle.across, ...puzzle.down]) {
+      assert.ok(entry.answer.length >= 3, puzzle.id);
+      assert.equal(seen.has(entry.answer), false, `${puzzle.id} ${entry.answer}`);
+      seen.add(entry.answer);
+      let r = entry.row;
+      let c = entry.col;
+      const across = puzzle.across.includes(entry);
+      let built = "";
+      for (const ch of entry.answer) {
+        assert.notEqual(grid[r][c], "#");
+        built += grid[r][c];
+        if (across) c += 1;
+        else r += 1;
+      }
+      assert.equal(built, entry.answer, puzzle.id);
+      const clue = entry.clue.toLowerCase();
+      if (clue.includes("connecticut") || clue.includes("dcp") || clue.includes("psi ")) {
+        assert.ok(entry.source && entry.source.url, `${puzzle.id} ${entry.clue}`);
+      }
+    }
+    for (let r = 0; r < n; r += 1) {
+      for (let c = 0; c < n; c += 1) {
+        assert.equal(grid[r][c] === "#", grid[n - 1 - r][n - 1 - c] === "#", puzzle.id);
+        if (grid[r][c] === "#") continue;
+        const across = puzzle.across.some((entry) => entry.row === r && c >= entry.col && c < entry.col + entry.answer.length);
+        const down = puzzle.down.some((entry) => entry.col === c && r >= entry.row && r < entry.row + entry.answer.length);
+        assert.equal(across && down, true, `${puzzle.id} ${r},${c}`);
+      }
+    }
+  }
+}
+
+const monday = new Date(2024, 0, 1);
+const first = puzzleForDate(pack, monday);
+assert.equal(first.weekday, "monday");
+assert.equal(first.index, 0);
+assert.equal(first.dateKey, "2024-01-01");
+const nextMonday = new Date(2024, 0, 8);
+assert.equal(puzzleForDate(pack, nextMonday).index, 1);
+assert.equal(puzzleForDate(pack, nextMonday).puzzle.id !== first.puzzle.id, true);
+const same = puzzleForDate(pack, monday);
+assert.equal(same.puzzle.id, first.puzzle.id);
+const sunday = new Date(2024, 0, 7);
+assert.equal(puzzleForDate(pack, sunday).weekday, "sunday");
+assert.ok(puzzleForDate(pack, sunday).puzzle.size > puzzleForDate(pack, new Date(2024, 0, 6)).puzzle.size);
+
+let fresh = createState();
+const clean = awardCrossword(fresh, "2026-09-26", true, "monday-1");
+assert.equal(clean.awarded, true);
+assert.equal(clean.xpGain, 40);
+assert.equal(clean.state.xp, 40);
+assert.equal(clean.state.supplies.coffee, 7);
+assert.equal(clean.state.supplies.fuel, 7);
+assert.equal(clean.supplyDelta, 4);
+assert.equal(clean.state.streak.count, 1);
+assert.equal(clean.state.crossword.streak.count, 1);
+const again = awardCrossword(clean.state, "2026-09-26", true, "monday-1");
+assert.equal(again.awarded, false);
+assert.equal(again.state.xp, 40);
+const dirty = awardCrossword(createState(), "2026-09-26", false, "monday-1");
+assert.equal(dirty.xpGain, 12);
+assert.equal(dirty.state.supplies.coffee, 6);
+assert.equal(dirty.supplyDelta, 0);
+const nextDay = awardCrossword(clean.state, "2026-09-27", true, "tuesday-1");
+assert.equal(nextDay.state.crossword.streak.count, 2);
+const skipped = awardCrossword(clean.state, "2026-09-28", true, "wednesday-1");
+assert.equal(skipped.state.crossword.streak.count, 1);
+
+console.log(`ok ${questions.length} questions, ${math.length} math, 56 crosswords`);
