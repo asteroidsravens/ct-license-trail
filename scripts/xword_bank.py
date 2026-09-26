@@ -148,7 +148,7 @@ OBEDIENCE|An agent's duty to follow lawful instructions|Doing what the client as
 SUBAGENCY|An agency relationship under another agent|An agent working under someone else's agent||1
 DUALAGENT|One licensee assisting both parties in the same deal|Both sides of the table, one license||1
 COVENANTS|Promises that run with a deed or a subdivision|The rules written into the land records||1
-FEESIMPLE|The broadest private ownership of land|The estate the textbook calls the most complete||1
+FEESIMPLE|The broadest private ownership of land|Ownership with no built-in end date||1
 LIFEESTATE|Ownership limited to someone's lifetime|Title that ends when a named life does||1
 DOMINANT|The estate that benefits from an appurtenant easement|The lot that gets to use the driveway||1
 SERVIENT|The estate burdened by an easement|The lot that has to put up with the path||1

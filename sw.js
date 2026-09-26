@@ -1,4 +1,4 @@
-const CACHE = "ct-license-trail-v7";
+const CACHE = "ct-license-trail-v8";
 const ASSETS = [
   "./",
   "./index.html",

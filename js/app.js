@@ -1,7 +1,7 @@
 import {
   STORAGE_KEY, SUPPLIES, SUPPLY_MAX, createState, levelInfo, daysUntil, todayKey,
   masteryPercent, answerQuestion, dueReviews, pickQuestions, sampleExam, recordExam,
-  roadTopics, puzzleForDate, awardCrossword, courseUnitId,
+  roadTopics, puzzleForDate, awardCrossword, completedChapters,
 } from "./logic.js";
 
 const main = document.querySelector("#main");
@@ -121,8 +121,27 @@ function startSession(kind, ids, topicId) {
   go("question");
 }
 
+function chapterList() {
+  return completedChapters(state, course);
+}
+
+function openRoad() {
+  return roadTopics(bank.topics, bank.questions, chapterList());
+}
+
+function chapterTitle(number) {
+  const row = course?.chapters?.find((item) => item.n === number);
+  return row ? `Ch ${number} · ${row.name}` : `Chapter ${number}`;
+}
+
 function startJourney(topicId) {
-  const road = roadTopics(bank.topics);
+  const road = openRoad();
+  const chapters = chapterList();
+  if (!road.length) {
+    say("Check at least one course chapter to open a town.");
+    go("settings");
+    return;
+  }
   if (!topicId) {
     const topic = road[(state.routeIndex || 0) % road.length];
     topicId = topic.id;
@@ -130,8 +149,12 @@ function startJourney(topicId) {
     const index = road.findIndex((topic) => topic.id === topicId);
     if (index >= 0) state.routeIndex = index;
   }
-  const ids = pickQuestions(bank.questions, topicId, 3, state);
-  const events = bank.questions.filter((q) => q.event && !ids.includes(q.id));
+  const ids = pickQuestions(bank.questions, topicId, 3, state, Math.random, chapters);
+  if (!ids.length) {
+    say("That town has no questions in the chapters you've completed.");
+    return;
+  }
+  const events = bank.questions.filter((q) => q.event && q.topic === topicId && chapters.includes(q.chapter) && !ids.includes(q.id));
   if (events.length && Math.random() < 0.75 && ids.length > 1) {
     const event = events[Math.floor(Math.random() * events.length)];
     ids.splice(1, 1, event.id);
@@ -192,9 +215,9 @@ function render() {
 function viewHome() {
   const level = levelInfo(state.xp);
   const days = daysUntil(state.examDate);
-  const due = dueReviews(state).length;
-  const road = roadTopics(bank.topics);
-  const town = road[(state.routeIndex || 0) % road.length];
+  const due = dueInChapters().length;
+  const road = openRoad();
+  const town = road.length ? road[(state.routeIndex || 0) % road.length] : null;
   let dateLine = "Set your own exam date whenever you know it. Change it any time.";
   if (days === 0) dateLine = "Exam day is today. A short review still counts.";
   else if (days > 0) dateLine = `${days} day${days === 1 ? "" : "s"} until the date you chose.`;
@@ -203,14 +226,14 @@ function viewHome() {
   const resumeQuiz = state.session && state.session.phase;
   main.innerHTML = `
     <section class="card">
-      <p class="kicker">${esc(town.town)}</p>
-      <h2>${resumeQuiz ? "Pick up the same question" : `Next stop: ${esc(town.name)}`}</h2>
-      <p class="lede">${esc(town.blurb)} Three questions is a full stop between rides.</p>
+      <p class="kicker">${town ? esc(town.town) : "Course chapters"}</p>
+      <h2>${resumeQuiz ? "Pick up the same question" : town ? `Next stop: ${esc(town.name)}` : "No town in these chapters yet"}</h2>
+      <p class="lede">${town ? `${esc(town.blurb)} Three questions is a full stop between rides.` : "The road uses only chapters you've completed. Check the ones you have finished."}</p>
       <div class="stack">
         ${resumeMock ? `<button class="btn btn-primary" data-act="resume-mock">Resume mock exam</button>` : ""}
-        <button class="btn btn-primary" data-act="continue">${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
+        <button class="btn btn-primary" data-act="continue" ${!resumeQuiz && !town ? "disabled" : ""}>${resumeQuiz ? "Continue this question" : "Start three questions"}</button>
         <button class="btn btn-quiet" data-act="daily">${dailyHomeLabel()}</button>
-        <button class="btn btn-quiet" data-act="settings">Course, exam date, and sound</button>
+        <button class="btn btn-quiet" data-act="settings">Chapters, exam date, and sound</button>
       </div>
     </section>
     <section class="card">
@@ -246,10 +269,10 @@ function viewQuestion() {
   const answered = session.phase === "explain";
   const keys = ["1", "2", "3", "4"];
   const where = session.kind === "review" ? "Review" : session.kind === "math" ? "Math Pass" : topic.town;
-  const unitName = course?.units?.find((unit) => unit.id === question.unit)?.name;
+  const chapterBit = question.chapter ? chapterTitle(question.chapter) : "";
   main.innerHTML = `
     <article class="card">
-      <p class="kicker">${esc(where)}${unitName ? ` · ${esc(unitName)}` : ""} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
+      <p class="kicker">${esc(where)}${chapterBit ? ` · ${esc(chapterBit)}` : ""} · ${session.index + 1} of ${session.ids.length}${question.event && session.kind === "journey" ? " · road stop" : ""}</p>
       <h2 class="stem" id="stem">${esc(question.stem)}</h2>
       <div class="stack" role="group" aria-labelledby="stem">
         ${question.choices.map((choice, index) => {
@@ -291,11 +314,12 @@ function explainBlock(question, choice) {
 }
 
 function viewMap() {
-  const road = roadTopics(bank.topics);
+  const road = openRoad();
+  const mathCount = bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).length;
   main.innerHTML = `
     <section class="card">
       <h2>The road</h2>
-      <p class="lede">Each town is an outline topic. Open any of them. The suggested stop is marked.</p>
+      <p class="lede">Towns with questions in the chapters you've completed. The suggested stop is marked.</p>
       <div class="roadline stack">
         ${road.map((topic, index) => {
           const pct = masteryPercent(state, topic.id);
@@ -310,41 +334,56 @@ function viewMap() {
             </span>
           </button>`;
         }).join("")}
-        <button class="btn town" data-act="math-tab">
+        <button class="btn town" data-act="math-tab" ${mathCount ? "" : "disabled"}>
           <span class="dot" aria-hidden="true"></span>
-          <span><strong>Waterbury</strong> · Math Pass<span class="muted" style="display:block">Calculator drills, with the steps written out.</span></span>
+          <span><strong>Waterbury</strong> · Math Pass<span class="muted" style="display:block">${mathCount ? `${mathCount} drills in your completed chapters.` : "No math drills in the chapters you've completed."}</span></span>
         </button>
       </div>
     </section>`;
 }
 
 function viewMathHome() {
-  const mathCount = bank.questions.filter((q) => q.math).length;
+  const mathCount = bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).length;
   main.innerHTML = `
     <section class="card">
       <p class="kicker">Waterbury · Math Pass</p>
       <h2>Numbers, then the reason</h2>
-      <p class="lede">${mathCount} drills: commission, splits, seller proceeds, prorations, Connecticut conveyance tax, LTV, PITI, area, cap rate, equity, and points. Every one shows the steps after you answer.</p>
+      <p class="lede">${mathCount} drills from chapters you've completed. Commission, prorations, conveyance tax, loans, area, and value show up when that chapter is checked. Every one shows the steps after you answer.</p>
       <div class="stack">
-        <button class="btn btn-primary" data-act="math-start">Work three math items</button>
+        <button class="btn btn-primary" data-act="math-start" ${mathCount ? "" : "disabled"}>Work three math items</button>
         <button class="btn btn-quiet" data-act="calc">Open the calculator</button>
       </div>
       <p class="muted">Day-count and who owns closing day are written into each proration, so you are practicing a stated method. Conveyance items use Conn. Gen. Stat. § 12-494 and say when the town has not added an extra local tax.</p>
     </section>`;
 }
 
+function mockDraw(mode) {
+  const chapters = state.mockAllChapters ? null : chapterList();
+  return sampleExam(bank.questions, bank.topics, mode, () => 0.5, chapters);
+}
+
 function viewExamHome() {
   const paused = state.mock && !state.mock.submitted;
+  const all = Boolean(state.mockAllChapters);
+  const national = mockDraw("national");
+  const stateDraw = mockDraw("state");
+  const both = mockDraw("both");
+  const scopeLine = all
+    ? "Every chapter is included, including chapters you have not completed. Counts and timing match the candidate bulletin."
+    : "Completed chapters only. Chapters you have not checked are left out, so the set can be shorter than the bulletin.";
   main.innerHTML = `
     <section class="card">
       <h2>Mock exam</h2>
       <p class="lede">Built to the PSI salesperson shape in the November 13, 2025 candidate bulletin: national 80 items / 120 minutes, Connecticut 35 items / 45 minutes, 70% to pass each sitting here. A full run is 115 items and 165 minutes.</p>
       <p>The clock pauses when you leave this page or lock the phone. On the real exam day, it will not.</p>
+      <button class="btn btn-pine" data-act="mock-scope" aria-pressed="${all ? "true" : "false"}">${all ? "Every chapter" : "Completed chapters only"}</button>
+      <p>${scopeLine}</p>
+      <p class="muted">National ${national.ids.length} items, ${national.minutes} min. Connecticut ${stateDraw.ids.length} items, ${stateDraw.minutes} min. Both ${both.ids.length} items, ${both.minutes} min.</p>
       <div class="stack">
         ${paused ? `<button class="btn btn-primary" data-act="resume-mock">Resume saved mock (${state.mock.ids.length} items)</button>` : ""}
-        <button class="btn btn-pine" data-mode="national">National portion</button>
-        <button class="btn btn-pine" data-mode="state">Connecticut portion</button>
-        <button class="btn btn-primary" data-mode="both">Both portions</button>
+        <button class="btn btn-pine" data-mode="national" ${national.ids.length ? "" : "disabled"}>National portion</button>
+        <button class="btn btn-pine" data-mode="state" ${stateDraw.ids.length ? "" : "disabled"}>Connecticut portion</button>
+        <button class="btn btn-primary" data-mode="both" ${both.ids.length ? "" : "disabled"}>Both portions</button>
       </div>
       <p class="muted">You can flag items and change answers until you submit or time runs out. Feedback waits until the end, like the real sitting. This is practice, not a PSI exam.</p>
     </section>`;
@@ -370,7 +409,7 @@ function viewMock() {
   const chosen = mock.answers[question.id];
   main.innerHTML = `
     <article class="card">
-      <p class="kicker">${esc(topic.name)} · ${mock.index + 1} of ${mock.ids.length}</p>
+      <p class="kicker">${esc(topic.name)}${question.chapter ? ` · ${esc(chapterTitle(question.chapter))}` : ""} · ${mock.index + 1} of ${mock.ids.length}${mock.everyChapter ? " · every chapter" : " · completed chapters"}</p>
       <p class="timer ${left < 5 * 60 * 1000 ? "low" : ""}" style="color:${left < 5 * 60 * 1000 ? "var(--bad)" : "var(--pine)"}" aria-live="off">Time left ${formatClock(left)}</p>
       <h2 class="stem" id="stem">${esc(question.stem)}</h2>
       <div class="stack" role="group" aria-labelledby="stem">
@@ -411,7 +450,7 @@ function viewMockResult() {
   main.innerHTML = `
     <section class="card">
       <h2>${result.passed ? "You cleared 70%." : "Not 70% this time."}</h2>
-      <p class="lede">${result.correct} of ${result.total} · ${result.percent}%. A salesperson passing score on the PSI bulletin is 70%. ${result.passed ? "Hold onto what worked." : "The misses are already in your review pile."}</p>
+      <p class="lede">${result.correct} of ${result.total} · ${result.percent}%. A salesperson passing score on the PSI bulletin is 70%. ${mock.everyChapter ? "This sitting included every chapter." : "This sitting used only chapters you've completed."} ${result.passed ? "Hold onto what worked." : "The misses are already in your review pile."}</p>
       ${lines}
       <div class="stack">
         <button class="btn btn-primary" data-act="review-tab">Review the misses</button>
@@ -420,8 +459,13 @@ function viewMockResult() {
     </section>`;
 }
 
+function dueInChapters() {
+  const allowed = new Set(chapterList());
+  return dueReviews(state).filter((id) => allowed.has(byId[id]?.chapter));
+}
+
 function viewReviewHome() {
-  const due = dueReviews(state);
+  const due = dueInChapters();
   const waiting = Object.values(state.review).filter((row) => row.due > Date.now()).length;
   main.innerHTML = `
     <section class="card">
@@ -434,18 +478,21 @@ function viewReviewHome() {
 }
 
 function viewSettings() {
-  const units = course?.units || [];
-  const current = courseUnitId(state, units);
+  const checked = new Set(chapterList());
+  const chapters = course?.chapters || [];
   main.innerHTML = `
     <section class="card">
-      <h2>Where am I in my course?</h2>
-      <p>Pick the unit you are on. The daily crossword uses terms from that unit and the ones before it, so it does not jump ahead.</p>
-      <label class="field" for="course-unit">Current unit</label>
-      <select id="course-unit">
-        ${units.map((unit, index) => `<option value="${esc(unit.id)}" ${unit.id === current ? "selected" : ""}>${index + 1}. ${esc(unit.name)}</option>`).join("")}
-      </select>
+      <h2>Chapters I've completed</h2>
+      <p>Classes rotate, so check every chapter you have already finished. The road and the daily crossword use only those chapters.</p>
+      <div class="stack chapter-list">
+        ${chapters.map((row) => `
+          <button type="button" class="checkline" data-act="toggle-chapter" data-chapter="${row.n}" aria-pressed="${checked.has(row.n) ? "true" : "false"}">
+            <span class="box" aria-hidden="true"></span>
+            <span><strong>Ch ${row.n}</strong> ${esc(row.name)}</span>
+          </button>`).join("")}
+      </div>
       <div class="stack" style="margin-top:12px">
-        <button class="btn btn-primary" data-act="save-unit">Save unit</button>
+        <button class="btn btn-quiet" data-act="reset-chapters">Use the starting chapters</button>
       </div>
     </section>
     <section class="card">
@@ -540,26 +587,26 @@ function crosswordBook() {
   return state.crossword;
 }
 
-function currentUnit() {
-  return courseUnitId(state, course?.units || crosswords?.unitOrder?.map((id) => ({ id })) || []);
-}
-
-function unitName(id) {
-  return course?.units?.find((unit) => unit.id === id)?.name || id || "";
+function chapterPhrase(numbers) {
+  const list = [...(numbers || [])].sort((a, b) => a - b);
+  if (!list.length) return "No chapters checked";
+  if (list.length === 1) return chapterTitle(list[0]);
+  return `Chapters ${list.join(", ")}`;
 }
 
 function dailyHomeLabel() {
   if (state.crossword?.solved?.[todayKey()]) return "Today's crossword · solved";
-  const name = unitName(currentUnit());
-  return name ? `Today's crossword · through ${name}` : "Today's crossword";
+  if (!chapterList().length) return "Today's crossword · check a chapter";
+  return "Today's crossword · completed chapters";
 }
 
 function todayPuzzle() {
-  return puzzleForDate(crosswords, new Date(), currentUnit());
+  if (!crosswords) return null;
+  return puzzleForDate(crosswords, new Date(), chapterList());
 }
 
 function slotKey(picked) {
-  return `${picked.dateKey}:${picked.unitId}`;
+  return `${picked.dateKey}:${picked.puzzle.id}`;
 }
 
 function isBlack(puzzle, r, c) {
@@ -642,7 +689,9 @@ function formatSeconds(total) {
 
 function rollDaily(now = Date.now()) {
   if (!crosswords || !course) return;
-  const prog = state.crossword?.progress?.[slotKey(todayPuzzle())];
+  const picked = todayPuzzle();
+  if (!picked) return;
+  const prog = state.crossword?.progress?.[slotKey(picked)];
   if (!prog?.running) return;
   const add = Math.max(0, Math.floor((now - prog.lastTick) / 1000));
   if (add > 0) {
@@ -653,7 +702,9 @@ function rollDaily(now = Date.now()) {
 
 function freezeDaily(now = Date.now()) {
   if (!crosswords || !course) return;
-  const prog = state.crossword?.progress?.[slotKey(todayPuzzle())];
+  const picked = todayPuzzle();
+  if (!picked) return;
+  const prog = state.crossword?.progress?.[slotKey(picked)];
   if (!prog?.running) return;
   rollDaily(now);
   prog.running = false;
@@ -665,6 +716,7 @@ function freezeDaily(now = Date.now()) {
 function resumeDaily(now = Date.now()) {
   if (!crosswords) return;
   const picked = todayPuzzle();
+  if (!picked) return;
   const prog = ensureProgress(picked.puzzle, slotKey(picked), picked.dateKey);
   if (prog.done) return;
   prog.running = true;
@@ -673,6 +725,7 @@ function resumeDaily(now = Date.now()) {
 
 function paintDaily() {
   const picked = todayPuzzle();
+  if (!picked) return;
   const puzzle = picked.puzzle;
   const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   const entry = entryAt(puzzle, prog.row, prog.col, prog.dir);
@@ -725,6 +778,14 @@ function viewDaily() {
     return;
   }
   const picked = todayPuzzle();
+  if (!picked) {
+    const checked = chapterList();
+    const detail = checked.length
+      ? "Nothing in the puzzle library stays inside just these chapters. Add another completed chapter, or use the starting set."
+      : "Check the chapters you have completed. The grid is built only from those chapters.";
+    main.innerHTML = `<section class="card"><h2>No crossword for these chapters yet</h2><p>${detail}</p><button class="btn btn-primary" data-act="settings">Choose chapters</button></section>`;
+    return;
+  }
   const puzzle = picked.puzzle;
   const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   if (!prog.done) resumeDaily();
@@ -748,9 +809,9 @@ function viewDaily() {
     <div class="xw">
       <div class="xw-scroll">
         <section class="card xw-head">
-          <p class="kicker">${esc(picked.weekday)} · ${esc(picked.dateKey)} · through ${esc(unitName(picked.unitId))}</p>
+          <p class="kicker">${esc(picked.weekday)} · ${esc(picked.dateKey)} · ${esc(chapterPhrase(picked.chapters))}</p>
           <h2>${esc(puzzle.title)}</h2>
-          <p class="lede">${esc(puzzle.blurb)} Terms from this unit and the ones before it.</p>
+          <p class="lede">${esc(puzzle.blurb)} Only chapters you've completed.</p>
           <p class="xw-meta"><span class="xw-time" aria-label="Elapsed time">0:00</span> · <span class="xw-streak">crossword streak 0</span></p>
           <p class="xw-banner note" hidden></p>
         </section>
@@ -951,6 +1012,7 @@ function xwTool(kind) {
 
 function xwArrow(key) {
   const picked = todayPuzzle();
+  if (!picked) return;
   const puzzle = picked.puzzle;
   const prog = ensureProgress(puzzle, slotKey(picked), picked.dateKey);
   const step = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowUp: [-1, 0], ArrowDown: [1, 0] }[key];
@@ -1015,20 +1077,34 @@ function onClick(event) {
   } else if (act === "calc-close") go(calcReturn);
   else if (act === "math-tab" || act === "math-start") {
     if (act === "math-start") {
-      const ids = bank.questions.filter((q) => q.math).map((q) => q.id);
+      const ids = bank.questions.filter((q) => q.math && chapterList().includes(q.chapter)).map((q) => q.id);
+      if (!ids.length) {
+        say("No math drills in the chapters you've completed.");
+        return;
+      }
       for (let i = ids.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
         [ids[i], ids[j]] = [ids[j], ids[i]];
       }
       startSession("math", ids.slice(0, 3), "math");
     } else go("math");
-  } else if (act === "save-unit") {
-    const value = document.querySelector("#course-unit")?.value;
-    const ids = (course?.units || []).map((unit) => unit.id);
-    state.courseUnit = ids.includes(value) ? value : (ids[0] || null);
+  } else if (act === "toggle-chapter") {
+    const number = Number(button.dataset.chapter);
+    const next = new Set(chapterList());
+    if (next.has(number)) next.delete(number);
+    else next.add(number);
+    state.completedChapters = [...next].sort((a, b) => a - b);
     save();
-    say("Course unit saved.");
     viewSettings();
+  } else if (act === "reset-chapters") {
+    state.completedChapters = null;
+    save();
+    say("Starting chapters restored.");
+    viewSettings();
+  } else if (act === "mock-scope") {
+    state.mockAllChapters = !state.mockAllChapters;
+    save();
+    viewExamHome();
   } else if (act === "save-date") {
     const value = document.querySelector("#exam-date").value;
     state.examDate = value || null;
@@ -1073,7 +1149,7 @@ function onClick(event) {
     go("home");
   } else if (act === "review-tab" || act === "review-start") {
     if (act === "review-start") {
-      const ids = dueReviews(state).slice(0, 5);
+      const ids = dueInChapters().slice(0, 5);
       if (ids.length) startSession("review", ids, null);
     } else go("review");
   } else if (act === "mock-clear") {
@@ -1113,8 +1189,8 @@ function advanceSession() {
     const finishedTown = topicById(session.topicId);
     state.session = null;
     if (session.kind === "journey") {
-      const road = roadTopics(bank.topics);
-      state.routeIndex = (state.routeIndex + 1) % road.length;
+      const road = openRoad();
+      if (road.length) state.routeIndex = (state.routeIndex + 1) % road.length;
     }
     save();
     say(finishedTown ? `${finishedTown.town} stop saved.` : "Stop saved.");
@@ -1131,10 +1207,16 @@ function advanceSession() {
 }
 
 function beginMock(mode) {
-  const drawn = sampleExam(bank.questions, bank.topics, mode);
+  const chapters = state.mockAllChapters ? null : chapterList();
+  const drawn = sampleExam(bank.questions, bank.topics, mode, Math.random, chapters);
+  if (!drawn.ids.length) {
+    say("No questions in that set.");
+    return;
+  }
   state.session = null;
   state.mock = {
     mode,
+    everyChapter: drawn.everyChapter,
     ids: drawn.ids,
     answers: {},
     flagged: {},
@@ -1209,6 +1291,7 @@ function compute(expr) {
 
 function onKey(event) {
   if (screen === "daily" && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    if (!todayPuzzle()) return;
     if (event.target && (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA")) return;
     if (event.key === "Backspace") {
       event.preventDefault();

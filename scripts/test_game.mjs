@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import {
   createState, levelInfo, daysUntil, todayKey, previousDay, masteryPercent,
   answerQuestion, dueReviews, sampleExam, scoreExam, recordExam, roadTopics,
-  puzzleForDate, awardCrossword, courseUnitId,
+  puzzleForDate, awardCrossword, completedChapters, pickQuestions,
 } from "../js/logic.js";
 
 const bank = JSON.parse(readFileSync(new URL("../data/questions.json", import.meta.url), "utf8"));
@@ -95,26 +95,47 @@ assert.equal(scored.passed, true);
 
 const course = JSON.parse(readFileSync(new URL("../data/course.json", import.meta.url), "utf8"));
 const pack = JSON.parse(readFileSync(new URL("../data/crosswords.json", import.meta.url), "utf8"));
-const unitOrder = course.units.map((unit) => unit.id);
-assert.deepEqual(pack.unitOrder, unitOrder);
-assert.equal(courseUnitId(createState(), course.units), unitOrder[0]);
-const moved = createState();
-moved.courseUnit = unitOrder[3];
-assert.equal(courseUnitId(moved, course.units), unitOrder[3]);
-moved.courseUnit = "retired-syllabus-unit";
-assert.equal(courseUnitId(moved, course.units), unitOrder[0]);
-const unitIndex = Object.fromEntries(unitOrder.map((id, index) => [id, index]));
+const chapterNumbers = course.chapters.map((row) => row.n);
+assert.deepEqual(chapterNumbers, Array.from({ length: 21 }, (_, index) => index + 1));
+assert.deepEqual(course.defaultCompleted, [2, 3, 6, 7, 14, 15, 16, 17, 20]);
+assert.deepEqual(completedChapters(createState(), course), course.defaultCompleted);
+const custom = createState();
+custom.completedChapters = [16, 2, 99];
+assert.deepEqual(completedChapters(custom, course), [2, 16]);
+custom.completedChapters = [];
+assert.deepEqual(completedChapters(custom, course), []);
 for (const item of questions) {
-  assert.equal(typeof unitIndex[item.unit], "number", `${item.id} unit`);
+  assert.equal(item.unit, undefined, `${item.id} unit`);
+  assert.ok(chapterNumbers.includes(item.chapter), `${item.id} chapter`);
 }
+const starter = course.defaultCompleted;
+const towns = roadTopics(bank.topics, questions, starter);
+assert.ok(towns.length > 0);
+assert.equal(roadTopics(bank.topics, questions, []).length, 0);
+for (const town of towns) {
+  const ids = pickQuestions(questions, town.id, 3, createState(), () => 0.2, starter);
+  assert.ok(ids.length > 0, town.id);
+  ids.forEach((id) => assert.ok(starter.includes(byId[id].chapter), `${town.id} ${id}`));
+}
+const limited = sampleExam(questions, bank.topics, "national", rng, starter);
+assert.ok(limited.ids.length > 0 && limited.ids.length <= 80);
+assert.equal(limited.everyChapter, false);
+limited.ids.forEach((id) => assert.ok(starter.includes(byId[id].chapter), id));
+const fullNational = sampleExam(questions, bank.topics, "both", rng, null);
+assert.equal(fullNational.everyChapter, true);
+assert.equal(fullNational.ids.length, 115);
 const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const banned = /new york times|\bnyt\b|wall street journal/i;
 let puzzleCount = 0;
-for (const unitId of unitOrder) {
-  const range = pack.ranges[unitId];
-  const limit = unitIndex[unitId];
+assert.ok(pack.packs.default, "default pack");
+assert.ok(pack.packs.all, "all-chapters pack");
+assert.deepEqual([...pack.packs.default.chapters].sort((a, b) => a - b), starter);
+assert.deepEqual(pack.packs.all.chapters, chapterNumbers);
+for (const [packId, range] of Object.entries(pack.packs)) {
+  const allowed = new Set([...range.chapters, 0]);
   for (const day of days) {
-    assert.ok(range.days[day].length >= 8, `${unitId} ${day}`);
+    const need = packId === "default" || packId === "all" ? 8 : 4;
+    assert.ok(range.days[day].length >= need, `${packId} ${day}`);
     for (const puzzle of range.days[day]) {
       puzzleCount += 1;
       assert.equal(banned.test(JSON.stringify(puzzle)), false, puzzle.id);
@@ -126,8 +147,8 @@ for (const unitId of unitOrder) {
         assert.ok(entry.answer.length >= 3, puzzle.id);
         assert.equal(seen.has(entry.answer), false, `${puzzle.id} ${entry.answer}`);
         seen.add(entry.answer);
-        assert.equal(course.words[entry.answer], entry.unit, `${puzzle.id} ${entry.answer}`);
-        assert.ok(unitIndex[entry.unit] <= limit, `${puzzle.id} jumps to ${entry.answer}`);
+        assert.equal(course.words[entry.answer], entry.chapter, `${puzzle.id} ${entry.answer}`);
+        assert.ok(allowed.has(entry.chapter), `${puzzle.id} chapter ${entry.chapter}`);
         let r = entry.row;
         let c = entry.col;
         const across = puzzle.across.includes(entry);
@@ -156,44 +177,41 @@ for (const unitId of unitOrder) {
     }
   }
   const sizes = Object.fromEntries(days.map((day) => [day, range.days[day][0].size]));
-  assert.ok(sizes.sunday >= sizes.saturday, `${unitId} sunday`);
+  assert.ok(sizes.sunday >= sizes.saturday, `${packId} sunday`);
   if (range.tier === "full") {
-    assert.ok(sizes.monday < sizes.thursday, unitId);
-    assert.ok(sizes.saturday < sizes.sunday, unitId);
+    assert.ok(sizes.monday < sizes.thursday, packId);
+    assert.ok(sizes.saturday < sizes.sunday, packId);
   }
   if (range.tier === "mini") {
-    assert.ok(sizes.monday <= 5 && sizes.saturday <= 5, unitId);
+    assert.ok(sizes.monday <= 5 && sizes.saturday <= 5, packId);
   }
 }
-const firstId = unitOrder[0];
-const lastId = unitOrder[unitOrder.length - 1];
 for (const day of days) {
-  for (const puzzle of pack.ranges[firstId].days[day]) {
-    const answers = new Set([...puzzle.across, ...puzzle.down].map((entry) => entry.answer));
-    assert.equal(answers.has("MORTGAGE"), false, puzzle.id);
-    assert.equal(answers.has("DEED"), false, puzzle.id);
-    assert.equal(answers.has("SIXTY"), false, puzzle.id);
+  for (const puzzle of pack.packs.default.days[day]) {
+    const chapters = new Set([...puzzle.across, ...puzzle.down].map((entry) => entry.chapter));
+    assert.equal(chapters.has(12), false, puzzle.id);
+    assert.equal(chapters.has(1), false, puzzle.id);
   }
 }
 
 const monday = new Date(2024, 0, 1);
-const first = puzzleForDate(pack, monday, firstId);
+const first = puzzleForDate(pack, monday, starter);
 assert.equal(first.weekday, "monday");
-assert.equal(first.index, 0);
 assert.equal(first.dateKey, "2024-01-01");
-assert.equal(first.unitId, firstId);
+assert.ok(first.chapters.length > 0);
+assert.ok(first.chapters.every((n) => starter.includes(n)));
 const nextMonday = new Date(2024, 0, 8);
-assert.equal(puzzleForDate(pack, nextMonday, firstId).index, 1);
-assert.equal(puzzleForDate(pack, nextMonday, firstId).puzzle.id !== first.puzzle.id, true);
-const same = puzzleForDate(pack, monday, firstId);
-assert.equal(same.puzzle.id, first.puzzle.id);
-assert.equal(puzzleForDate(pack, monday, "not-a-real-unit").unitId, firstId);
-assert.equal(puzzleForDate(pack, monday).unitId, firstId);
+assert.equal(puzzleForDate(pack, nextMonday, starter).puzzle.id !== first.puzzle.id, true);
+assert.equal(puzzleForDate(pack, monday, starter).puzzle.id, first.puzzle.id);
+assert.ok(puzzleForDate(pack, monday).chapters.every((n) => starter.includes(n)));
+assert.equal(puzzleForDate(pack, monday, []), null);
+const onlyTwo = puzzleForDate(pack, monday, [2]);
+assert.ok(onlyTwo);
+assert.deepEqual(onlyTwo.chapters, [2]);
 const saturday = new Date(2024, 0, 6);
 const sunday = new Date(2024, 0, 7);
-assert.equal(puzzleForDate(pack, sunday, lastId).weekday, "sunday");
-assert.ok(puzzleForDate(pack, saturday, lastId).puzzle.size > puzzleForDate(pack, saturday, firstId).puzzle.size);
-assert.ok(puzzleForDate(pack, sunday, lastId).puzzle.size > puzzleForDate(pack, saturday, lastId).puzzle.size);
+assert.equal(puzzleForDate(pack, sunday, chapterNumbers).weekday, "sunday");
+assert.ok(puzzleForDate(pack, sunday, chapterNumbers).puzzle.size > puzzleForDate(pack, saturday, chapterNumbers).puzzle.size);
 
 let fresh = createState();
 const clean = awardCrossword(fresh, "2026-09-26", true, "monday-1");
@@ -217,4 +235,4 @@ assert.equal(nextDay.state.crossword.streak.count, 2);
 const skipped = awardCrossword(clean.state, "2026-09-28", true, "wednesday-1");
 assert.equal(skipped.state.crossword.streak.count, 1);
 
-console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${unitOrder.length} units`);
+console.log(`ok ${questions.length} questions, ${math.length} math, ${puzzleCount} crosswords, ${chapterNumbers.length} chapters`);
