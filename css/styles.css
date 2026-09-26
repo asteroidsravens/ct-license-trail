@@ -87,7 +87,14 @@ a { color: var(--focus); }
 }
 main {
   flex: 1;
-  padding: 14px 14px calc(var(--tab) + 18px);
+  padding: 14px 14px calc(var(--tab) + 24px);
+}
+.btn, .choice { scroll-margin: 12px 0 calc(var(--tab) + 24px); }
+.dock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
 }
 .card {
   background: var(--card);
@@ -162,6 +169,7 @@ h2 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 8px; }
   border-radius: 14px;
   padding: 12px;
   margin-top: 12px;
+  scroll-margin-top: 12px;
 }
 .explain.miss { background: var(--bad-bg); }
 .explain h3 { margin: 0 0 6px; font-size: 1.05rem; }

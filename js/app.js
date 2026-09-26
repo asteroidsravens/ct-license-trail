@@ -250,7 +250,7 @@ function viewQuestion() {
       </div>
       ${answered ? explainBlock(question, session.choice) : ""}
       ${session.note ? `<div class="note">${esc(session.note)}</div>` : ""}
-      <div class="stack" style="margin-top:12px">
+      <div class="dock">
         ${question.math ? `<button class="btn btn-quiet" data-act="calc">Calculator</button>` : ""}
         ${answered ? `<button class="btn btn-primary" data-act="next-q">${session.index + 1 >= session.ids.length ? "Finish this stop" : "Next question"}</button>` : ""}
         <button class="btn btn-quiet" data-act="park">Park and save</button>
@@ -370,7 +370,7 @@ function viewMock() {
         <button class="btn btn-quiet" data-act="mock-flag">${mock.flagged[question.id] ? "Unflag" : "Flag"}</button>
         <button class="btn btn-quiet" data-act="calc">Calc</button>
       </div>
-      <div class="stack" style="margin-top:10px">
+      <div class="dock">
         ${mock.index + 1 < mock.ids.length
           ? `<button class="btn btn-primary" data-act="mock-next">Next</button>`
           : `<button class="btn btn-primary" data-act="mock-submit">Submit exam</button>`}
@@ -627,6 +627,7 @@ function chooseAnswer(choice) {
   save();
   say(outcome.correct ? "Correct. " + question.explanation : "Not this time. " + question.explanation);
   viewQuestion();
+  main.querySelector(".explain")?.scrollIntoView({ block: "start" });
 }
 
 function advanceSession() {
